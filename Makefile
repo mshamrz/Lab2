@@ -1,19 +1,19 @@
-# Deploy contract. CI runs these same targets — nothing it does is a secret
-# recipe you cannot run yourself.
-#
-# Required environment variables (set locally in your shell, or as
-# repository variables/secrets in CI):
-#   AWS_REGION            e.g. eu-central-1
-#   S3_BUCKET             frontend bucket name
-#   CLOUDFRONT_DIST_ID    CloudFront distribution id
-#   ECR_REPOSITORY        e.g. 123456789012.dkr.ecr.eu-central-1.amazonaws.com/spry-backend
-#   ECS_CLUSTER           e.g. spry-cluster
-#   ECS_SERVICE           e.g. spry-backend
-#   API_URL               e.g. https://api.yourdomain.com  (baked into the frontend build)
+-include .env
+export
 
 IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
 
-.PHONY: deploy-frontend deploy-backend
+.PHONY: deploy-frontend deploy-backend deploy-auth
+
+deploy-auth:
+	aws cloudformation deploy \
+		--template-file infra/auth.yml \
+		--stack-name spry-auth \
+		--parameter-overrides \
+			CognitoDomainPrefix=$(COGNITO_DOMAIN_PREFIX) \
+			GoogleClientId=$(GOOGLE_CLIENT_ID) \
+			GoogleClientSecret=$(GOOGLE_CLIENT_SECRET) \
+		--capabilities CAPABILITY_IAM
 
 deploy-frontend:
 	cd frontend && npm ci && VITE_API_URL=$(API_URL) npm run build
