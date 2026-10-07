@@ -27,6 +27,13 @@ Resources:
         - email
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
       UserPoolTier: ESSENTIALS
       UserPoolTags:
         PROJECT_NAME: !Ref ProjectName
@@ -40,31 +47,10 @@ Resources:
       ProviderDetails:
         client_id: !Ref GoogleClientId
         client_secret: !Ref GoogleClientSecret
-        authorize_scopes: openid email profile
+        authorize_scopes: 'openid email profile'
       AttributeMapping:
         email: email
         email_verified: email_verified
-
-    UserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: !Sub '${ProjectName}-user-pool'
-      UsernameAttributes:
-        - email
-      AutoVerifiedAttributes:
-        - email
-      AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: false
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireUppercase: true
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: false
-      UserPoolTier: ESSENTIALS
-      UserPoolTags:
-        PROJECT_NAME: !Ref ProjectName
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -78,6 +64,7 @@ Resources:
         - openid
         - email
         - profile
+      AllowedOAuthFlowsUserPoolClient: true
       SupportedIdentityProviders:
         - COGNITO
         - Google
