@@ -1,8 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "react-oidc-context";
 
 import App from "./App";
+import Login from "./pages/Login";
+import Callback from "./pages/Callback";
 import "./index.css";
 
 const cognitoAuthConfig = {
@@ -15,7 +18,13 @@ const cognitoAuthConfig = {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider {...cognitoAuthConfig}>
-      <App />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/login/" element={<Login />} />
+          <Route path="/auth/callback/" element={<Callback />} />
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>,
 );
