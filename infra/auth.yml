@@ -45,6 +45,27 @@ Resources:
         email: email
         email_verified: email_verified
 
+    UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${ProjectName}-user-pool'
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      UserPoolTier: ESSENTIALS
+      UserPoolTags:
+        PROJECT_NAME: !Ref ProjectName
+
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -60,14 +81,14 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
         - Google
-      CallbackURLs:
+            CallbackURLs:
         - !Sub 'https://${AppDomain}/auth/callback/'
         - !Sub 'https://${AppDomain}/'
-        - 'http://localhost:3000/'
-        - 'http://localhost:3000/auth/callback/'
+        - 'http://localhost:5173/'
+        - 'http://localhost:5173/auth/callback/'
       LogoutURLs:
         - !Sub 'https://${AppDomain}/'
-        - 'http://localhost:3000/'
+        - 'http://localhost:5173/'
     DependsOn: GoogleIdentityProvider
 
   UserPoolDomain:
