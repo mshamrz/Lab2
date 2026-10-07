@@ -81,7 +81,7 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
         - Google
-            CallbackURLs:
+      CallbackURLs:
         - !Sub 'https://${AppDomain}/auth/callback/'
         - !Sub 'https://${AppDomain}/'
         - 'http://localhost:5173/'
