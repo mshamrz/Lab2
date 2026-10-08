@@ -9,9 +9,9 @@ import Callback from "./pages/Callback";
 import "./index.css";
 
 const cognitoAuthConfig = {
-  authority: import.meta.env.VITE_COGNITO_AUTHORITY,
-  client_id: import.meta.env.VITE_COGNITO_CLIENT_ID,
-  redirect_uri: import.meta.env.VITE_COGNITO_REDIRECT_URI,
+  authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_zous9WTDf",
+  client_id: "c76j5carht9ilqha454ioj3hm",
+  redirect_uri: "https://d30mlui26iqxfd.cloudfront.net/auth/callback/",
   scope: "openid email profile",
 };
 
