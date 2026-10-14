@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Weekly meetings report - S3 bucket and VPC S3 gateway endpoint
+Description: Weekly meetings report - S3, VPC endpoint, report-builder Lambda, schedule
 
 Parameters:
   ProjectName:
@@ -9,6 +9,15 @@ Parameters:
     Type: String
   RouteTableId:
     Type: String
+  SubnetIds:
+    Type: CommaDelimitedList
+  SecurityGroupId:
+    Type: String
+  BuilderImageUri:
+    Type: String
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
 
 Resources:
   ReportsBucket:
@@ -38,6 +47,92 @@ Resources:
       RouteTableIds:
         - !Ref RouteTableId
 
+  BuilderExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-report-builder-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: WriteReports
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}/reports/*'
+      Tags:
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  BuilderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-report-builder'
+      PackageType: Image
+      Code:
+        ImageUri: !Ref BuilderImageUri
+      Role: !GetAtt BuilderExecutionRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      VpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+      Environment:
+        Variables:
+          REPORTS_BUCKET: !Sub '${ProjectName}-reports-${AWS::AccountId}'
+          DATABASE_URL: !Ref DatabaseUrl
+      Tags:
+        PROJECT_NAME: !Ref ProjectName
+
+  SchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-report-scheduler-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeBuilder
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt BuilderFunction.Arn
+      Tags:
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  WeeklySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Sub '${ProjectName}-weekly-report-schedule'
+      ScheduleExpression: 'cron(0 7 ? * MON *)'
+      ScheduleExpressionTimezone: Europe/Kyiv
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt BuilderFunction.Arn
+        RoleArn: !GetAtt SchedulerExecutionRole.Arn
+        Input: '{"source": "schedule"}'
+
 Outputs:
   ReportsBucketName:
     Value: !Ref ReportsBucket
+  BuilderFunctionName:
+    Value: !Ref BuilderFunction
+  BuilderFunctionArn:
+    Value: !GetAtt BuilderFunction.Arn
