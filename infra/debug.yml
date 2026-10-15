@@ -1,47 +1,25 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Debug - S3, VPC endpoint, IAM role only
+Description: Debug - Lambda function only
 
 Parameters:
   ProjectName:
     Type: String
     Default: spry
-  VpcId:
+  SubnetIds:
+    Type: CommaDelimitedList
+  SecurityGroupId:
     Type: String
-  RouteTableId:
+  BuilderImageUri:
     Type: String
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
 
 Resources:
-  ReportsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub '${ProjectName}-reports-${AWS::AccountId}'
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      LifecycleConfiguration:
-        Rules:
-          - Id: ExpireAfter90Days
-            Status: Enabled
-            ExpirationInDays: 90
-      Tags:
-        - Key: PROJECT_NAME
-          Value: !Ref ProjectName
-
-  S3GatewayEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      VpcEndpointType: Gateway
-      RouteTableIds:
-        - !Ref RouteTableId
-
   BuilderExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${ProjectName}-report-builder-role'
+      RoleName: !Sub '${ProjectName}-debug-builder-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -59,10 +37,26 @@ Resources:
               - Effect: Allow
                 Action: s3:PutObject
                 Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}/reports/*'
-      Tags:
-        - Key: PROJECT_NAME
-          Value: !Ref ProjectName
+
+  BuilderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-debug-report-builder'
+      PackageType: Image
+      Code:
+        ImageUri: !Ref BuilderImageUri
+      Role: !GetAtt BuilderExecutionRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      VpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+      Environment:
+        Variables:
+          REPORTS_BUCKET: !Sub '${ProjectName}-reports-${AWS::AccountId}'
+          DATABASE_URL: !Ref DatabaseUrl
 
 Outputs:
-  ReportsBucketName:
-    Value: !Ref ReportsBucket
+  BuilderFunctionArn:
+    Value: !GetAtt BuilderFunction.Arn
