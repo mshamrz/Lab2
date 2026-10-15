@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import date, timedelta
-
+import json
 import boto3
 
 from app.database import SessionLocal
@@ -11,7 +11,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 REPORTS_BUCKET = os.environ["REPORTS_BUCKET"]
-
 s3 = boto3.client("s3")
 
 
@@ -32,10 +31,12 @@ def _detect_trigger(event: dict) -> str:
 
 def _week_from_event(event: dict) -> str | None:
     if isinstance(event, dict) and "Records" in event:
-        import json
-
-        body = json.loads(event["Records"][0]["body"])
-        return body.get("week")
+        body_str = event["Records"][0].get("body", "{}")
+        try:
+            body = json.loads(body_str)
+            return body.get("week")
+        except Exception:
+            return None
     if isinstance(event, dict):
         return event.get("week")
     return None
@@ -45,6 +46,7 @@ def handler(event, context):
     trigger = _detect_trigger(event)
     week = _week_from_event(event) or _previous_iso_week()
 
+    # Рядок логу для здачі роботи (Крок 7)
     log.info("report-builder triggered", extra={"trigger": trigger, "week": week})
 
     db = SessionLocal()
