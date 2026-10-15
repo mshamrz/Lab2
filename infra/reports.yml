@@ -107,6 +107,10 @@ Resources:
       Code:
         ImageUri: !Ref BuilderImageUri
       ImageConfig:
+        EntryPoint:
+          - "python"
+          - "-m"
+          - "awslambdaric"
         Command:
           - app.reports.lambda_handler.handler
       Role: !GetAtt BuilderExecutionRole.Arn
