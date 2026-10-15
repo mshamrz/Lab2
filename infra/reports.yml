@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Weekly meetings report - S3, VPC endpoint, report-builder Lambda, schedule
+Description: Weekly meetings report architecture - S3, VPC Endpoint, SQS+DLQ, Builder Lambda, Mailer Lambda, SES
 
 Parameters:
   ProjectName:
@@ -18,10 +18,15 @@ Parameters:
   DatabaseUrl:
     Type: String
     NoEcho: true
+  RecipientEmail:
+    Type: String
+    Description: Verified SES email address to receive reports
 
 Resources:
+  # 1. Приватний S3 бакет
   ReportsBucket:
     Type: AWS::S3::Bucket
+    DependsOn: MailerLambdaPermission
     Properties:
       BucketName: !Sub '${ProjectName}-reports-${AWS::AccountId}'
       PublicAccessBlockConfiguration:
@@ -34,10 +39,22 @@ Resources:
           - Id: ExpireAfter90Days
             Status: Enabled
             ExpirationInDays: 90
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: reports/
+                  - Name: suffix
+                    Value: .csv
+            Function: !GetAtt MailerFunction.Arn
       Tags:
         - Key: PROJECT_NAME
           Value: !Ref ProjectName
 
+  # 2. S3 Gateway VPCEndpoint
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -47,6 +64,22 @@ Resources:
       RouteTableIds:
         - !Ref RouteTableId
 
+  # 3. SQS Черги (DLQ + Основна)
+  ReportRequestsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${ProjectName}-report-requests-dlq'
+
+  ReportRequestsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${ProjectName}-report-requests'
+      VisibilityTimeout: 360
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ReportRequestsDLQ.Arn
+        maxReceiveCount: 3
+
+  # 4. IAM Роль та Lambda report-builder (у VPC)
   BuilderExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -61,13 +94,19 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
       Policies:
-        - PolicyName: WriteReports
+        - PolicyName: BuilderPermissions
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action: s3:PutObject
                 Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}/reports/*'
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt ReportRequestsQueue.Arn
       Tags:
         - Key: PROJECT_NAME
           Value: !Ref ProjectName
@@ -79,6 +118,9 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Ref BuilderImageUri
+      ImageConfig:
+        Command:
+          - app.reports.lambda_handler.handler
       Role: !GetAtt BuilderExecutionRole.Arn
       Timeout: 60
       MemorySize: 512
@@ -91,8 +133,18 @@ Resources:
           REPORTS_BUCKET: !Sub '${ProjectName}-reports-${AWS::AccountId}'
           DATABASE_URL: !Ref DatabaseUrl
       Tags:
-        PROJECT_NAME: !Ref ProjectName
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
 
+  # 5. Мапінг SQS -> Builder Lambda
+  BuilderSQSMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      EventSourceArn: !GetAtt ReportRequestsQueue.Arn
+      FunctionName: !Ref BuilderFunction
+
+  # 6. EventBridge Scheduler -> SQS
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -105,13 +157,13 @@ Resources:
               Service: scheduler.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: InvokeBuilder
+        - PolicyName: SendSQS
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !GetAtt BuilderFunction.Arn
+                Action: sqs:SendMessage
+                Resource: !GetAtt ReportRequestsQueue.Arn
       Tags:
         - Key: PROJECT_NAME
           Value: !Ref ProjectName
@@ -125,14 +177,108 @@ Resources:
       FlexibleTimeWindow:
         Mode: 'OFF'
       Target:
-        Arn: !GetAtt BuilderFunction.Arn
+        Arn: !GetAtt ReportRequestsQueue.Arn
         RoleArn: !GetAtt SchedulerExecutionRole.Arn
-        Input: '{"source": "schedule"}'
+        Input: '{"source": "schedule", "week": null}'
+
+  # 7. Lambda report-mailer (поза VPC) та її дозволи
+  MailerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-report-mailer-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: MailerPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}/reports/*'
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: '*'
+      Tags:
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  MailerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-report-mailer'
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt MailerExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import os, boto3, logging
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+          from email.mime.application import MIMEApplication
+
+          log = logging.getLogger()
+          log.setLevel(logging.INFO)
+          s3 = boto3.client('s3')
+          ses = boto3.client('ses')
+
+          def handler(event, context):
+              log.info("report-mailer triggered", extra={"trigger": "s3", "event": event})
+              record = event['Records'][0]['s3']
+              bucket = record['bucket']['name']
+              key = record['object']['key']
+
+              obj = s3.get_object(Bucket=bucket, Key=key)
+              file_bytes = obj['Body'].read()
+
+              recipient = os.environ['RECIPIENT_EMAIL']
+              sender = os.environ.get('SENDER_EMAIL', recipient)
+
+              msg = MIMEMultipart()
+              msg['Subject'] = f"Weekly Meetings Report ({os.path.basename(key)})"
+              msg['From'] = sender
+              msg['To'] = recipient
+
+              msg.attach(MIMEText("Please find attached the requested weekly report CSV file.", "plain"))
+              att = MIMEApplication(file_bytes)
+              att.add_header('Content-Disposition', 'attachment', filename=os.path.basename(key))
+              msg.attach(att)
+
+              ses.send_raw_email(Source=sender, Destinations=[recipient], RawMessage={'Data': msg.as_bytes()})
+              log.info("report-mailer sent email", extra={"recipient": recipient, "key": key})
+              return {"status": "sent", "key": key}
+      Environment:
+        Variables:
+          RECIPIENT_EMAIL: !Ref RecipientEmail
+      Tags:
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  MailerLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MailerFunction.Arn
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}'
 
 Outputs:
   ReportsBucketName:
     Value: !Ref ReportsBucket
+  ReportRequestsQueueUrl:
+    Value: !Ref ReportRequestsQueue
   BuilderFunctionName:
     Value: !Ref BuilderFunction
-  BuilderFunctionArn:
-    Value: !GetAtt BuilderFunction.Arn
+  MailerFunctionName:
+    Value: !Ref MailerFunction
