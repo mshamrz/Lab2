@@ -1,13 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Weekly meetings report architecture - S3, VPC Endpoint, SQS+DLQ, Builder Lambda, Mailer Lambda, SES
+Description: Weekly meetings report architecture - S3, SQS+DLQ, Builder Lambda, Mailer Lambda, SES
 
 Parameters:
   ProjectName:
     Type: String
     Default: spry
   VpcId:
-    Type: String
-  RouteTableId:
     Type: String
   SubnetIds:
     Type: CommaDelimitedList
@@ -54,17 +52,7 @@ Resources:
         - Key: PROJECT_NAME
           Value: !Ref ProjectName
 
-  # 2. S3 Gateway VPCEndpoint
-  S3GatewayEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      VpcEndpointType: Gateway
-      RouteTableIds:
-        - !Ref RouteTableId
-
-  # 3. SQS Черги (DLQ + Основна)
+  # 2. SQS Черги (DLQ + Основна)
   ReportRequestsDLQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -79,7 +67,7 @@ Resources:
         deadLetterTargetArn: !GetAtt ReportRequestsDLQ.Arn
         maxReceiveCount: 3
 
-  # 4. IAM Роль та Lambda report-builder (у VPC)
+  # 3. IAM Роль та Lambda report-builder (у VPC)
   BuilderExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -136,7 +124,7 @@ Resources:
         - Key: PROJECT_NAME
           Value: !Ref ProjectName
 
-  # 5. Мапінг SQS -> Builder Lambda
+  # 4. Мапінг SQS -> Builder Lambda
   BuilderSQSMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -144,7 +132,7 @@ Resources:
       EventSourceArn: !GetAtt ReportRequestsQueue.Arn
       FunctionName: !Ref BuilderFunction
 
-  # 6. EventBridge Scheduler -> SQS
+  # 5. EventBridge Scheduler -> SQS
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -181,7 +169,7 @@ Resources:
         RoleArn: !GetAtt SchedulerExecutionRole.Arn
         Input: '{"source": "schedule", "week": null}'
 
-  # 7. Lambda report-mailer (поза VPC) та її дозволи
+  # 6. Lambda report-mailer (поза VPC) та дозволи
   MailerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
