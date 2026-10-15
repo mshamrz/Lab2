@@ -9,3 +9,4 @@ task-definition.json
 frontend/cf_config.json
 frontend/cf_updated.json
 frontend/config.json
+env.json 
