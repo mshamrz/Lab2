@@ -164,7 +164,7 @@ Resources:
     Type: AWS::Scheduler::Schedule
     Properties:
       Name: !Sub '${ProjectName}-weekly-report-schedule'
-      ScheduleExpression: 'cron(0 7 ? * MON *)'
+      ScheduleExpression: 'cron(0 8 ? * MON *)'
       ScheduleExpressionTimezone: Europe/Kyiv
       FlexibleTimeWindow:
         Mode: 'OFF'
