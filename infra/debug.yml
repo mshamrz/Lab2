@@ -1,10 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Debug - Lambda function and schedule
+Description: Debug - bucket, endpoint, role, function together, no scheduler
 
 Parameters:
   ProjectName:
     Type: String
     Default: spry
+  VpcId:
+    Type: String
+  RouteTableId:
+    Type: String
   SubnetIds:
     Type: CommaDelimitedList
   SecurityGroupId:
@@ -16,10 +20,37 @@ Parameters:
     NoEcho: true
 
 Resources:
+  ReportsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-reports2-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireAfter90Days
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref RouteTableId
+
   BuilderExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${ProjectName}-debug-builder-role'
+      RoleName: !Sub '${ProjectName}-debug4-builder-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -36,12 +67,12 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:PutObject
-                Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports-${AWS::AccountId}/reports/*'
+                Resource: !Sub 'arn:aws:s3:::${ProjectName}-reports2-${AWS::AccountId}/reports/*'
 
   BuilderFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub '${ProjectName}-debug-report-builder'
+      FunctionName: !Sub '${ProjectName}-debug4-report-builder'
       PackageType: Image
       Code:
         ImageUri: !Ref BuilderImageUri
@@ -54,42 +85,9 @@ Resources:
           - !Ref SecurityGroupId
       Environment:
         Variables:
-          REPORTS_BUCKET: !Sub '${ProjectName}-reports-${AWS::AccountId}'
+          REPORTS_BUCKET: !Sub '${ProjectName}-reports2-${AWS::AccountId}'
           DATABASE_URL: !Ref DatabaseUrl
 
-  SchedulerExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ProjectName}-debug-scheduler-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: scheduler.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: InvokeBuilder
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !GetAtt BuilderFunction.Arn
-
-  WeeklySchedule:
-    Type: AWS::Scheduler::Schedule
-    Properties:
-      Name: !Sub '${ProjectName}-debug-weekly-report-schedule'
-      ScheduleExpression: 'cron(0 7 ? * MON *)'
-      ScheduleExpressionTimezone: Europe/Kyiv
-      FlexibleTimeWindow:
-        Mode: 'OFF'
-      Target:
-        Arn: !GetAtt BuilderFunction.Arn
-        RoleArn: !GetAtt SchedulerExecutionRole.Arn
-        Input: '{"source": "schedule"}'
-
 Outputs:
-  BuilderFunctionArn:
-    Value: !GetAtt BuilderFunction.Arn
+  BucketName:
+    Value: !Ref ReportsBucket
