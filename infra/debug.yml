@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Debug - Lambda function only
+Description: Debug - Lambda function and schedule
 
 Parameters:
   ProjectName:
@@ -56,6 +56,39 @@ Resources:
         Variables:
           REPORTS_BUCKET: !Sub '${ProjectName}-reports-${AWS::AccountId}'
           DATABASE_URL: !Ref DatabaseUrl
+
+  SchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-debug-scheduler-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeBuilder
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt BuilderFunction.Arn
+
+  WeeklySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Sub '${ProjectName}-debug-weekly-report-schedule'
+      ScheduleExpression: 'cron(0 7 ? * MON *)'
+      ScheduleExpressionTimezone: Europe/Kyiv
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt BuilderFunction.Arn
+        RoleArn: !GetAtt SchedulerExecutionRole.Arn
+        Input: '{"source": "schedule"}'
 
 Outputs:
   BuilderFunctionArn:
