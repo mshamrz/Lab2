@@ -29,3 +29,5 @@ deploy-backend:
 	python3 infra/render_task_def.py /tmp/current-task-def.json $(ECR_REPOSITORY):$(IMAGE_TAG) > /tmp/new-task-def.json
 	aws ecs register-task-definition --cli-input-json file:///tmp/new-task-def.json
 	aws ecs update-service --cluster $(ECS_CLUSTER) --service $(ECS_SERVICE) --task-definition spry-backend --force-new-deployment
+llm-hello:
+	python scripts/llm_hello.py
