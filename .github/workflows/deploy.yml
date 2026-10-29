@@ -24,8 +24,8 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/spry-deploy-role
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam://${{ secrets.AWS_ACCOUNT_ID || '438424053032' }}:role/spry-deploy-role
+          aws-region: ${{ vars.AWS_REGION || 'eu-central-1' }}
 
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
@@ -53,8 +53,8 @@ jobs:
         run: |
           aws ecs register-task-definition --cli-input-json file://new-task-def.json
           aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service ${{ vars.ECS_SERVICE }} \
+            --cluster ${{ vars.ECS_CLUSTER || 'spry-cluster' }} \
+            --service ${{ vars.ECS_SERVICE || 'spry-backend' }} \
             --task-definition spry-backend \
             --force-new-deployment
 
@@ -73,12 +73,12 @@ jobs:
       - run: npm run lint
       - run: npm run build
         env:
-          VITE_API_URL: ${{ vars.API_URL }}
+          VITE_API_URL: ${{ vars.API_URL || 'https://d3i310kfe8hkit.cloudfront.net' }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/spry-deploy-role
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam://${{ secrets.AWS_ACCOUNT_ID || '438424053032' }}:role/spry-deploy-role
+          aws-region: ${{ vars.AWS_REGION || 'eu-central-1' }}
 
-      - run: aws s3 sync dist s3://${{ vars.S3_BUCKET }} --delete
-      - run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DIST_ID }} --paths "/*"
+      - run: aws s3 sync dist s3://${{ vars.S3_BUCKET || 'spry-frontend-mshamrz' }} --delete
+      - run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DIST_ID || 'E1C070XBXZMZQ9' }} --paths "/*"

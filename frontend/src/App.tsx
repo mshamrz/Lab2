@@ -34,9 +34,11 @@ export default function App() {
     await refresh();
   }
 
+  const token = auth.user?.id_token || auth.user?.access_token;
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-            <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Spry — Meetings</h1>
         {auth.isAuthenticated ? (
           <div className="flex items-center gap-3 text-sm">
@@ -61,7 +63,7 @@ export default function App() {
         )}
       </div>
       <div className="space-y-6">
-        <MeetingForm onCreate={handleCreate} />
+        <MeetingForm onCreate={handleCreate} token={token} />
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {loadError && <p className="text-sm text-red-600">{loadError}</p>}
         {!loading && !loadError && <MeetingList meetings={meetings} />}

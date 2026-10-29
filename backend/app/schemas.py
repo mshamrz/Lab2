@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -8,6 +9,8 @@ class MeetingCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     attendee_count: int = Field(ge=0)
+    agenda: Any = None
+    ai_suggestion: Any = None
 
     @field_validator("ends_at")
     @classmethod
@@ -26,3 +29,5 @@ class MeetingOut(BaseModel):
     starts_at: datetime
     ends_at: datetime
     attendee_count: int
+    agenda: Any = None
+    ai_suggestion: Any = None

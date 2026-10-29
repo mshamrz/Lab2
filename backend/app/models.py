@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import JSON, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -12,3 +12,5 @@ class Meeting(Base):
     starts_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), nullable=False)
     ends_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), nullable=False)
     attendee_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    agenda: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    ai_suggestion: Mapped[dict | None] = mapped_column(JSON, nullable=True)
