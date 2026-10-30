@@ -9,4 +9,11 @@ task-definition.json
 frontend/cf_config.json
 frontend/cf_updated.json
 frontend/config.json
-env.json 
+env.json
+build/
+token.json
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log

@@ -5,9 +5,12 @@ Parameters:
   ProjectName:
     Type: String
     Default: spry
-  ImageUri:
+  CodeBucket:
     Type: String
-    Description: Same backend Lambda image that report-builder uses
+    Description: S3 bucket that holds the parser zip
+  CodeKey:
+    Type: String
+    Default: agenda-parser.zip
   UserPoolId:
     Type: String
   UserPoolClientId:
@@ -55,16 +58,11 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub '${ProjectName}-agenda-parser'
-      PackageType: Image
+      Runtime: python3.12
+      Handler: app.ai.agenda_lambda.handler
       Code:
-        ImageUri: !Ref ImageUri
-      ImageConfig:
-        EntryPoint:
-          - "python"
-          - "-m"
-          - "awslambdaric"
-        Command:
-          - app.ai.agenda_lambda.handler
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
       Role: !GetAtt ParserExecutionRole.Arn
       Timeout: 30
       MemorySize: 512
@@ -116,5 +114,3 @@ Outputs:
     Value: !Ref ParserFunction
   ParserUrl:
     Value: !GetAtt ParserUrl.FunctionUrl
- 
-Claude finished the response
