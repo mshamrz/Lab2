@@ -1,27 +1,42 @@
-# Adopt the Cognito resources that CloudFormation let go of.
+# Adopt the agenda-parser resources that CloudFormation let go of.
 # Delete this file after the first successful apply.
 
 import {
-  to = aws_cognito_user_pool.main
-  id = "us-east-1_zous9WTDf"
+  to = aws_s3_bucket.code
+  id = "spry-agenda-code-438424053032"
 }
 
 import {
-  to = aws_cognito_identity_provider.google
-  id = "us-east-1_zous9WTDf:Google"
+  to = aws_iam_role.parser
+  id = "spry-agenda-parser-role"
 }
 
 import {
-  to = aws_cognito_user_pool_client.main
-  id = "us-east-1_zous9WTDf/c76j5carht9ilqha454ioj3hm"
+  to = aws_iam_role_policy_attachment.parser_logs
+  id = "spry-agenda-parser-role/arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 import {
-  to = aws_cognito_user_pool_domain.main
-  id = "spry-auth-mariana"
+  to = aws_iam_role_policy.invoke_claude
+  id = "spry-agenda-parser-role:InvokeClaude"
 }
 
 import {
-  to = aws_cognito_managed_login_branding.main
-  id = "us-east-1_zous9WTDf,b9435a49-9946-4d15-a486-f3e16bbdafae"
+  to = aws_lambda_function.parser
+  id = "spry-agenda-parser"
+}
+
+import {
+  to = aws_lambda_function_url.parser
+  id = "spry-agenda-parser"
+}
+
+import {
+  to = aws_lambda_permission.parser_url
+  id = "spry-agenda-parser/spry-ai-ParserUrlPermission-XZv7HRkJCtM8"
+}
+
+import {
+  to = aws_lambda_permission.parser_invoke
+  id = "spry-agenda-parser/spry-ai-ParserInvokePermission-SKrZhINGpYeF"
 }

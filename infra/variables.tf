@@ -27,3 +27,14 @@ variable "google_client_secret" {
   sensitive   = true
   description = "OAuth client secret of the Google project from Lab 4"
 }
+
+variable "parser_model" {
+  type    = string
+  default = "us.anthropic.claude-sonnet-4-6"
+}
+
+variable "parser_code_key" {
+  type        = string
+  default     = "agenda-parser.zip"
+  description = "S3 key of the parser zip in the code bucket"
+}
