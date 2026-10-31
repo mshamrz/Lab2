@@ -144,7 +144,7 @@ resource "aws_lambda_function" "builder" {
   environment {
     variables = {
       REPORTS_BUCKET = local.reports_bucket
-      DATABASE_URL   = var.database_url
+      DATABASE_URL   = trimspace(var.database_url)
     }
   }
 }
