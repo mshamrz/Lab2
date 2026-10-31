@@ -39,18 +39,21 @@ HCP Terraform (organization `ooad-mshamrz`, workspace `spry-dev`).
 
 | File | What it describes |
 |---|---|
-| `versions.tf` | Terraform and provider versions, the HCP Terraform workspace, default tags |
+| `versions.tf` | Terraform and provider versions, the HCP Terraform workspace, default tags, the two AWS regions |
 | `variables.tf`, `terraform.tfvars` | Inputs. Non-secret values are in `terraform.tfvars` |
-| `auth.tf` | Cognito user pool, Google provider, client, domain, branding |
-| `ai.tf` | The agenda parser: role, Lambda function, function URL, code bucket |
+| `auth.tf` | Cognito user pool, Google provider, client, domain, branding (`us-east-1`) |
+| `ai.tf` | The agenda parser: role, Lambda function, function URL, code bucket (`us-east-1`) |
+| `reports.tf` | The weekly report: bucket, SQS, builder and mailer Lambdas, schedule (`eu-central-1`) |
+| `mailer/index.py` | Code of the report-mailer Lambda |
 | `outputs.tf` | Ids and the parser URL |
 
 **How a change reaches AWS.** Open a pull request that changes `infra/`. HCP
 Terraform posts a plan as a check. Read it, merge, then confirm the run in
 HCP Terraform (**Confirm & Apply**). Nobody applies from a laptop.
 
-**Secrets** (`google_client_id`, `google_client_secret`) are Terraform variables
-in the workspace. They are never committed.
+**Secrets** (`google_client_id`, `google_client_secret`, `database_url`,
+`recipient_email`) are Terraform variables in the workspace. They are never
+committed.
 
 **Useful commands**
 
@@ -58,5 +61,4 @@ in the workspace. They are never committed.
     make infra-validate   # init without the backend, then validate
     make infra-plan       # a speculative plan in HCP Terraform (terraform login first)
 
-`infra/reports.yml` is the Lab 5 CloudFormation template. It is not migrated,
-see `docs/adr/0007-terraform.md`.
+Why Terraform, and what it changed: see `docs/adr/0007-terraform.md`.
