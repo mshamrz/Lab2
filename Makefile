@@ -3,17 +3,19 @@ export
 
 IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
 
-.PHONY: deploy-frontend deploy-backend deploy-auth llm-hello parse
+.PHONY: deploy-frontend deploy-backend infra-fmt infra-validate infra-plan llm-hello
 
-deploy-auth:
-	aws cloudformation deploy \
-		--template-file infra/auth.yml \
-		--stack-name spry-auth \
-		--parameter-overrides \
-			CognitoDomainPrefix=$(COGNITO_DOMAIN_PREFIX) \
-			GoogleClientId=$(GOOGLE_CLIENT_ID) \
-			GoogleClientSecret=$(GOOGLE_CLIENT_SECRET) \
-		--capabilities CAPABILITY_IAM
+# Infrastructure is described in infra/*.tf and applied by HCP Terraform
+# after a merge to main. There is deliberately no "terraform apply" target here.
+infra-fmt:
+	cd infra && terraform fmt -check
+
+infra-validate:
+	cd infra && terraform init -backend=false && terraform validate
+
+# A speculative plan in HCP Terraform (needs "terraform login" once).
+infra-plan:
+	cd infra && terraform init && terraform plan
 
 deploy-frontend:
 	cd frontend && npm ci && VITE_API_URL=$(API_URL) npm run build
@@ -32,6 +34,3 @@ deploy-backend:
 
 llm-hello:
 	python scripts/llm_hello.py
-
-parse:
-	python backend/app/ai/agenda.py $(TEXT)
