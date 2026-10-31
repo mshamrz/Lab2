@@ -192,7 +192,7 @@ resource "aws_iam_role_policy" "scheduler" {
 resource "aws_scheduler_schedule" "weekly" {
   provider                     = aws.eu
   name                         = "${var.project_name}-weekly-report-schedule"
-  schedule_expression          = "cron(0 8 ? * MON *)"
+  schedule_expression          = "cron(0 7 ? * MON *)"
   schedule_expression_timezone = "Europe/Kyiv"
 
   flexible_time_window {
