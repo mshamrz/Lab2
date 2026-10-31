@@ -38,3 +38,29 @@ variable "parser_code_key" {
   default     = "agenda-parser.zip"
   description = "S3 key of the parser zip in the code bucket"
 }
+
+# ---- The weekly report (Lab 5) ----
+
+variable "builder_image_uri" {
+  type    = string
+  default = "438424053032.dkr.ecr.eu-central-1.amazonaws.com/spry-backend:latest"
+}
+
+variable "subnet_ids" {
+  type = list(string)
+}
+
+variable "security_group_id" {
+  type = string
+}
+
+variable "database_url" {
+  type        = string
+  sensitive   = true
+  description = "Connection string of the Aurora database, for report-builder"
+}
+
+variable "recipient_email" {
+  type        = string
+  description = "Verified SES address that receives the weekly report"
+}

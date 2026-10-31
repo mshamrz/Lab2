@@ -17,3 +17,11 @@ output "parser_function_name" {
 output "parser_url" {
   value = aws_lambda_function_url.parser.function_url
 }
+
+output "reports_bucket" {
+  value = aws_s3_bucket.reports.bucket
+}
+
+output "report_requests_queue_url" {
+  value = aws_sqs_queue.report_requests.url
+}
