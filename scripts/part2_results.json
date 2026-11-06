@@ -1,0 +1,431 @@
+{
+  "comparison": [
+    {
+      "query": "Query 3 (Turnover)",
+      "json_scanned_mb": 1202.29,
+      "json_runtime_s": 3.6,
+      "parquet_scanned_mb": 6.1,
+      "parquet_runtime_s": 1.16,
+      "scanned_ratio": 197.1
+    },
+    {
+      "query": "Query 4 (Failure Rate)",
+      "json_scanned_mb": 1202.29,
+      "json_runtime_s": 3.59,
+      "parquet_scanned_mb": 0.64,
+      "parquet_runtime_s": 1.0,
+      "scanned_ratio": 1878.6
+    },
+    {
+      "query": "Query 5 (Peak Hours)",
+      "json_scanned_mb": 1202.29,
+      "json_runtime_s": 3.4,
+      "parquet_scanned_mb": 6.24,
+      "parquet_runtime_s": 1.22,
+      "scanned_ratio": 192.7
+    }
+  ],
+  "q3_results": [
+    {
+      "merchantId": "m-009",
+      "merchantName": "Інтернет-магазин",
+      "currency": "UAH",
+      "successful_payments_count": "87115",
+      "total_turnover": "3.1025925921E8"
+    },
+    {
+      "merchantId": "m-008",
+      "merchantName": "АЗС",
+      "currency": "UAH",
+      "successful_payments_count": "87560",
+      "total_turnover": "1.4464134106E8"
+    },
+    {
+      "merchantId": "m-010",
+      "merchantName": "Квитки",
+      "currency": "UAH",
+      "successful_payments_count": "87303",
+      "total_turnover": "7.774986365E7"
+    },
+    {
+      "merchantId": "m-002",
+      "merchantName": "Супермаркет",
+      "currency": "UAH",
+      "successful_payments_count": "87283",
+      "total_turnover": "5.414759702E7"
+    },
+    {
+      "merchantId": "m-004",
+      "merchantName": "Доставка їжі",
+      "currency": "UAH",
+      "successful_payments_count": "87820",
+      "total_turnover": "4.604401826E7"
+    },
+    {
+      "merchantId": "m-007",
+      "merchantName": "Аптека",
+      "currency": "UAH",
+      "successful_payments_count": "87374",
+      "total_turnover": "3.855415104E7"
+    },
+    {
+      "merchantId": "m-003",
+      "merchantName": "Таксі",
+      "currency": "UAH",
+      "successful_payments_count": "87307",
+      "total_turnover": "2.152821939E7"
+    },
+    {
+      "merchantId": "m-009",
+      "merchantName": "Інтернет-магазин",
+      "currency": "USD",
+      "successful_payments_count": "3725",
+      "total_turnover": "1.384094283E7"
+    },
+    {
+      "merchantId": "m-005",
+      "merchantName": "Онлайн-кінотеатр",
+      "currency": "UAH",
+      "successful_payments_count": "87357",
+      "total_turnover": "1.3016193E7"
+    },
+    {
+      "merchantId": "m-001",
+      "merchantName": "Кав'ярня",
+      "currency": "UAH",
+      "successful_payments_count": "87637",
+      "total_turnover": "1.143568768E7"
+    },
+    {
+      "merchantId": "m-009",
+      "merchantName": "Інтернет-магазин",
+      "currency": "EUR",
+      "successful_payments_count": "2840",
+      "total_turnover": "1.00845003E7"
+    },
+    {
+      "merchantId": "m-006",
+      "merchantName": "Музичний сервіс",
+      "currency": "UAH",
+      "successful_payments_count": "87517",
+      "total_turnover": "8664183.0"
+    },
+    {
+      "merchantId": "m-008",
+      "merchantName": "АЗС",
+      "currency": "USD",
+      "successful_payments_count": "3600",
+      "total_turnover": "5856481.33"
+    },
+    {
+      "merchantId": "m-008",
+      "merchantName": "АЗС",
+      "currency": "EUR",
+      "successful_payments_count": "2873",
+      "total_turnover": "4708258.32"
+    },
+    {
+      "merchantId": "m-010",
+      "merchantName": "Квитки",
+      "currency": "USD",
+      "successful_payments_count": "3876",
+      "total_turnover": "3602313.89"
+    },
+    {
+      "merchantId": "m-010",
+      "merchantName": "Квитки",
+      "currency": "EUR",
+      "successful_payments_count": "2745",
+      "total_turnover": "2451613.23"
+    },
+    {
+      "merchantId": "m-002",
+      "merchantName": "Супермаркет",
+      "currency": "USD",
+      "successful_payments_count": "3776",
+      "total_turnover": "2310115.59"
+    },
+    {
+      "merchantId": "m-004",
+      "merchantName": "Доставка їжі",
+      "currency": "USD",
+      "successful_payments_count": "3754",
+      "total_turnover": "2036639.2"
+    },
+    {
+      "merchantId": "m-002",
+      "merchantName": "Супермаркет",
+      "currency": "EUR",
+      "successful_payments_count": "2841",
+      "total_turnover": "1737547.31"
+    },
+    {
+      "merchantId": "m-007",
+      "merchantName": "Аптека",
+      "currency": "USD",
+      "successful_payments_count": "3727",
+      "total_turnover": "1659126.96"
+    },
+    {
+      "merchantId": "m-004",
+      "merchantName": "Доставка їжі",
+      "currency": "EUR",
+      "successful_payments_count": "2727",
+      "total_turnover": "1427829.18"
+    },
+    {
+      "merchantId": "m-007",
+      "merchantName": "Аптека",
+      "currency": "EUR",
+      "successful_payments_count": "2758",
+      "total_turnover": "1203052.19"
+    },
+    {
+      "merchantId": "m-003",
+      "merchantName": "Таксі",
+      "currency": "USD",
+      "successful_payments_count": "3742",
+      "total_turnover": "923507.17"
+    },
+    {
+      "merchantId": "m-003",
+      "merchantName": "Таксі",
+      "currency": "EUR",
+      "successful_payments_count": "2875",
+      "total_turnover": "724136.69"
+    },
+    {
+      "merchantId": "m-005",
+      "merchantName": "Онлайн-кінотеатр",
+      "currency": "USD",
+      "successful_payments_count": "3688",
+      "total_turnover": "549512.0"
+    },
+    {
+      "merchantId": "m-001",
+      "merchantName": "Кав'ярня",
+      "currency": "USD",
+      "successful_payments_count": "3819",
+      "total_turnover": "505697.22"
+    },
+    {
+      "merchantId": "m-005",
+      "merchantName": "Онлайн-кінотеатр",
+      "currency": "EUR",
+      "successful_payments_count": "2840",
+      "total_turnover": "423160.0"
+    },
+    {
+      "merchantId": "m-006",
+      "merchantName": "Музичний сервіс",
+      "currency": "USD",
+      "successful_payments_count": "3762",
+      "total_turnover": "372438.0"
+    },
+    {
+      "merchantId": "m-001",
+      "merchantName": "Кав'ярня",
+      "currency": "EUR",
+      "successful_payments_count": "2802",
+      "total_turnover": "365038.15"
+    },
+    {
+      "merchantId": "m-006",
+      "merchantName": "Музичний сервіс",
+      "currency": "EUR",
+      "successful_payments_count": "2777",
+      "total_turnover": "274923.0"
+    }
+  ],
+  "q4_results": [
+    {
+      "paymentMethod": "qr",
+      "device": "android",
+      "total_payments": "6675",
+      "failed_payments": "448",
+      "failure_rate_pct": "6.71"
+    },
+    {
+      "paymentMethod": "apple_pay",
+      "device": "android",
+      "total_payments": "83677",
+      "failed_payments": "5130",
+      "failure_rate_pct": "6.13"
+    },
+    {
+      "paymentMethod": "google_pay",
+      "device": "web",
+      "total_payments": "59996",
+      "failed_payments": "3645",
+      "failure_rate_pct": "6.08"
+    },
+    {
+      "paymentMethod": "card",
+      "device": "android",
+      "total_payments": "183332",
+      "failed_payments": "11079",
+      "failure_rate_pct": "6.04"
+    },
+    {
+      "paymentMethod": "apple_pay",
+      "device": "ios",
+      "total_payments": "83164",
+      "failed_payments": "5025",
+      "failure_rate_pct": "6.04"
+    },
+    {
+      "paymentMethod": "card",
+      "device": "web",
+      "total_payments": "183435",
+      "failed_payments": "11020",
+      "failure_rate_pct": "6.01"
+    },
+    {
+      "paymentMethod": "google_pay",
+      "device": "ios",
+      "total_payments": "59761",
+      "failed_payments": "3590",
+      "failure_rate_pct": "6.01"
+    },
+    {
+      "paymentMethod": "qr",
+      "device": "web",
+      "total_payments": "6669",
+      "failed_payments": "400",
+      "failure_rate_pct": "6.0"
+    },
+    {
+      "paymentMethod": "google_pay",
+      "device": "android",
+      "total_payments": "59450",
+      "failed_payments": "3563",
+      "failure_rate_pct": "5.99"
+    },
+    {
+      "paymentMethod": "apple_pay",
+      "device": "web",
+      "total_payments": "83505",
+      "failed_payments": "4966",
+      "failure_rate_pct": "5.95"
+    },
+    {
+      "paymentMethod": "card",
+      "device": "ios",
+      "total_payments": "183541",
+      "failed_payments": "10912",
+      "failure_rate_pct": "5.95"
+    },
+    {
+      "paymentMethod": "qr",
+      "device": "ios",
+      "total_payments": "6795",
+      "failed_payments": "402",
+      "failure_rate_pct": "5.92"
+    }
+  ],
+  "q5_results": [
+    {
+      "hour_of_day": "0",
+      "payments_count": "6597"
+    },
+    {
+      "hour_of_day": "1",
+      "payments_count": "6622"
+    },
+    {
+      "hour_of_day": "2",
+      "payments_count": "6592"
+    },
+    {
+      "hour_of_day": "3",
+      "payments_count": "6629"
+    },
+    {
+      "hour_of_day": "4",
+      "payments_count": "6585"
+    },
+    {
+      "hour_of_day": "5",
+      "payments_count": "13291"
+    },
+    {
+      "hour_of_day": "6",
+      "payments_count": "26851"
+    },
+    {
+      "hour_of_day": "7",
+      "payments_count": "46684"
+    },
+    {
+      "hour_of_day": "8",
+      "payments_count": "59947"
+    },
+    {
+      "hour_of_day": "9",
+      "payments_count": "53492"
+    },
+    {
+      "hour_of_day": "10",
+      "payments_count": "46521"
+    },
+    {
+      "hour_of_day": "11",
+      "payments_count": "53438"
+    },
+    {
+      "hour_of_day": "12",
+      "payments_count": "66304"
+    },
+    {
+      "hour_of_day": "13",
+      "payments_count": "59948"
+    },
+    {
+      "hour_of_day": "14",
+      "payments_count": "53306"
+    },
+    {
+      "hour_of_day": "15",
+      "payments_count": "53783"
+    },
+    {
+      "hour_of_day": "16",
+      "payments_count": "60256"
+    },
+    {
+      "hour_of_day": "17",
+      "payments_count": "72905"
+    },
+    {
+      "hour_of_day": "18",
+      "payments_count": "80338"
+    },
+    {
+      "hour_of_day": "19",
+      "payments_count": "73167"
+    },
+    {
+      "hour_of_day": "20",
+      "payments_count": "60219"
+    },
+    {
+      "hour_of_day": "21",
+      "payments_count": "46627"
+    },
+    {
+      "hour_of_day": "22",
+      "payments_count": "26669"
+    },
+    {
+      "hour_of_day": "23",
+      "payments_count": "13229"
+    }
+  ],
+  "q6_results": [
+    {
+      "total_events": "3030197",
+      "late_events_gt_60s": "60824",
+      "late_pct": "2.0073"
+    }
+  ]
+}

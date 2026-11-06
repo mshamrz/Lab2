@@ -17,3 +17,5 @@ token.json
 *.tfstate.*
 *.tfplan
 crash.log
+data/
+*.jsonl

@@ -1,0 +1,35 @@
+{
+  "exp1": {
+    "baseline_payments": 13795,
+    "paused_resumed_payments": 13795,
+    "events_lost": 0,
+    "explanation": "No events are lost because Kafka/Redpanda retains an append-only commit log and tracks consumer group offsets."
+  },
+  "exp2": {
+    "total_partitions": 3,
+    "worker_1_partitions": [
+      0,
+      1
+    ],
+    "worker_2_partitions": [
+      2
+    ],
+    "worker_1_events": 67383,
+    "worker_2_events": 33701,
+    "explanation": "Adding a second consumer triggers group coordinator partition rebalancing, splitting partitions across instances."
+  },
+  "exp3": {
+    "injected_failure_rate": "30%",
+    "observed_failure_rate": "31.90%",
+    "alerts_triggered": 1572,
+    "explanation": "Failure rate exceeded 10% threshold in almost every 1-minute window, firing alerts continuously."
+  },
+  "exp4": {
+    "normal_lateness_min": 2.0,
+    "normal_rejected": 1680,
+    "zero_lateness_min": 0.0,
+    "zero_rejected": 2532,
+    "payments_difference": 198,
+    "explanation": "With 0 waiting time, late arriving events (>60s delayed webhooks) find their windows already closed and are rejected."
+  }
+}

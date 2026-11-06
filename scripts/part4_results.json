@@ -1,0 +1,105 @@
+{
+  "total_streamed_events": 5000,
+  "sns_alerts_fired": 1,
+  "athena_query_id": "37c6d429-bde6-4451-8c7d-a88fd941b57e",
+  "athena_scanned_mb": 1.99,
+  "athena_runtime_sec": 0.46,
+  "athena_results": [
+    {
+      "status": "created",
+      "paymentMethod": "card",
+      "stream_count": "893",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "processing",
+      "paymentMethod": "card",
+      "stream_count": "892",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "success",
+      "paymentMethod": "card",
+      "stream_count": "834",
+      "stream_turnover_uah": "686578.15"
+    },
+    {
+      "status": "created",
+      "paymentMethod": "apple_pay",
+      "stream_count": "430",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "processing",
+      "paymentMethod": "apple_pay",
+      "stream_count": "426",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "success",
+      "paymentMethod": "apple_pay",
+      "stream_count": "400",
+      "stream_turnover_uah": "281694.0"
+    },
+    {
+      "status": "created",
+      "paymentMethod": "google_pay",
+      "stream_count": "257",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "processing",
+      "paymentMethod": "google_pay",
+      "stream_count": "255",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "success",
+      "paymentMethod": "google_pay",
+      "stream_count": "233",
+      "stream_turnover_uah": "169073.98"
+    },
+    {
+      "status": "failure",
+      "paymentMethod": "card",
+      "stream_count": "156",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "failure",
+      "paymentMethod": "apple_pay",
+      "stream_count": "69",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "failure",
+      "paymentMethod": "google_pay",
+      "stream_count": "46",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "created",
+      "paymentMethod": "qr",
+      "stream_count": "36",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "processing",
+      "paymentMethod": "qr",
+      "stream_count": "35",
+      "stream_turnover_uah": "0.0"
+    },
+    {
+      "status": "success",
+      "paymentMethod": "qr",
+      "stream_count": "31",
+      "stream_turnover_uah": "25933.26"
+    },
+    {
+      "status": "failure",
+      "paymentMethod": "qr",
+      "stream_count": "7",
+      "stream_turnover_uah": "0.0"
+    }
+  ]
+}
