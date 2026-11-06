@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Звіт з лабораторної роботи 8: Streaming and Batch Analytics</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 14mm 16mm 14mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 19pt;
+      color: #0f172a;
+      border-bottom: 2.5px solid #2563eb;
+      padding-bottom: 8px;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: 14pt;
+      color: #1e3a8a;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 5px;
+      margin-top: 22px;
+      margin-bottom: 10px;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 11.5pt;
+      color: #1e40af;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+    h4 {
+      font-size: 10.5pt;
+      color: #334155;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      page-break-after: avoid;
+    }
+    p, ul, ol {
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e2e8f0;
+      margin: 14px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    code {
+      font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 8.5pt;
+      background-color: #f1f5f9;
+      color: #0369a1;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 8pt;
+      line-height: 1.4;
+      overflow-x: auto;
+      margin: 6px 0 10px 0;
+      page-break-inside: avoid;
+    }
+    pre code {
+      background: none;
+      color: #e2e8f0;
+      padding: 0;
+      border: none;
+      font-size: 8pt;
+    }
+    blockquote {
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      margin: 8px 0;
+      padding: 6px 12px;
+      color: #1e3a8a;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+    .diagram-container {
+      border: 1.5px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+    .diagram-title {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .header-box {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 9.5pt;
+    }
+  </style>
+</head>
+<body>
+  <h1>Лабораторна робота 8: Streaming and Batch Analytics</h1>
+<p><strong>Студентка:</strong> Маріана Мороз (<code>m.moroz.pn@ucu.edu.ua</code>)<br />
+<strong>AWS Account ID:</strong> <code>438424053032</code><br />
+<strong>Регіон AWS:</strong> <code>us-east-1</code><br />
+<strong>S3 Бакет проекту:</strong> <code>s3://ucu-ooad-lab8-mshamrz-438424053032/</code>  </p>
+<hr />
+<h2>Part 2 — Пакетна аналітика в AWS (Batch on AWS)</h2>
+<h3>1. Масштаб датасету (Scale Answers)</h3>
+<ul>
+<li><strong>Загальна кількість подій (Total Events):</strong> <code>3,030,197</code></li>
+<li><strong>Кількість унікальних платежів (<code>invoiceId</code>):</strong> <code>1,000,000</code> (рівно 1 мільйон)</li>
+<li><strong>Кількість точних дублікатів (Duplicates):</strong> <code>30,197</code> (рівно <strong>~1.00%</strong> подій надійшли повторно через мережеві ретраї)</li>
+<li><strong>Частка подій, що запізнилися понад 60 секунд (<code>receivedAt - modifiedDate &gt; 60s</code>):</strong> <code>60,824</code> подій (<strong>2.01%</strong>)</li>
+<li><strong>Частка подій, що запізнилися понад 1 годину (&gt; 1 hour late):</strong> <strong><code>0.00%</code></strong> (затримка зафіксована лише в межах 1–10 хвилин)</li>
+</ul>
+<hr />
+<h3>2. SQL-запити в Athena та їхні результати</h3>
+<h4>1) Створення зовнішньої таблиці <code>payment_events</code> (JSON SerDe)</h4>
+<pre><code class="language-sql">CREATE EXTERNAL TABLE IF NOT EXISTS payment_events (
+    invoiceId string,
+    status string,
+    failureReason string,
+    amount bigint,
+    finalAmount bigint,
+    ccy int,
+    reference string,
+    createdDate string,
+    modifiedDate string,
+    receivedAt string,
+    merchantId string,
+    merchantName string,
+    mcc int,
+    customerId string,
+    paymentMethod string,
+    device string
+)
+PARTITIONED BY (dt string)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+WITH SERDEPROPERTIES (
+    'ignore.malformed.json' = 'true',
+    'case.insensitive' = 'true'
+)
+LOCATION 's3://ucu-ooad-lab8-mshamrz-438424053032/payments/'
+TBLPROPERTIES ('has_encrypted_data'='false');
+
+MSCK REPAIR TABLE payment_events;
+</code></pre>
+<h4>2) Запит 2: Дедуплікація (View <code>payments</code>)</h4>
+<p>Залишає рівно 1 фінальний стан на <code>invoiceId</code> (з найпізнішим <code>modifiedDate</code>):</p>
+<pre><code class="language-sql">CREATE OR REPLACE VIEW payments AS
+WITH distinct_events AS (
+    SELECT DISTINCT
+        invoiceId, status, failureReason, amount, finalAmount, ccy,
+        reference, createdDate, modifiedDate, receivedAt, merchantId,
+        merchantName, mcc, customerId, paymentMethod, device, dt
+    FROM payment_events
+),
+ranked AS (
+    SELECT *,
+           row_number() OVER (
+               PARTITION BY invoiceId 
+               ORDER BY modifiedDate DESC, receivedAt DESC
+           ) as rn
+    FROM distinct_events
+)
+SELECT * FROM ranked WHERE rn = 1;
+</code></pre>
+<h4>3) Запит 3: Оборот за мерчантом і валютою (Turnover)</h4>
+<pre><code class="language-sql">SELECT 
+    merchantId,
+    merchantName,
+    CASE ccy
+        WHEN 980 THEN 'UAH'
+        WHEN 840 THEN 'USD'
+        WHEN 978 THEN 'EUR'
+        ELSE CAST(ccy AS varchar)
+    END AS currency,
+    COUNT(*) AS successful_payments_count,
+    ROUND(SUM(finalAmount) / 100.0, 2) AS total_turnover
+FROM payments
+WHERE status = 'success'
+GROUP BY merchantId, merchantName, ccy
+ORDER BY total_turnover DESC;
+</code></pre>
+<p><em>Результати (вибірка топ-5 мерчантів):</em><br />
+* <code>m-009</code> (Інтернет-магазин) | UAH: <strong>310,259,259.21 ₴</strong> (87,115 платежів) | USD: $13,840,942.83 | EUR: €10,084,500.30<br />
+* <code>m-008</code> (АЗС) | UAH: <strong>144,641,341.06 ₴</strong> (87,560 платежів) | USD: $5,856,481.33 | EUR: €4,708,258.32<br />
+* <code>m-010</code> (Квитки) | UAH: <strong>77,749,863.65 ₴</strong> (87,303 платежів) | USD: $3,602,313.89 | EUR: €2,451,613.23<br />
+* <code>m-002</code> (Супермаркет) | UAH: <strong>54,147,597.02 ₴</strong> (87,283 платежів) | USD: $2,310,115.59 | EUR: €1,737,547.31<br />
+* <code>m-004</code> (Доставка їжі) | UAH: <strong>46,044,018.26 ₴</strong> (87,820 платежів) | USD: $2,036,639.20 | EUR: €1,427,829.18</p>
+<h4>4) Запит 4: Частка невдалих платежів (Failure Rate)</h4>
+<pre><code class="language-sql">SELECT 
+    paymentMethod,
+    device,
+    COUNT(*) AS total_payments,
+    COUNT(CASE WHEN status = 'failure' THEN 1 END) AS failed_payments,
+    ROUND(100.0 * COUNT(CASE WHEN status = 'failure' THEN 1 END) / COUNT(*), 2) AS failure_rate_pct
+FROM payments
+GROUP BY paymentMethod, device
+ORDER BY failure_rate_pct DESC;
+</code></pre>
+<p><em>Результати:</em><br />
+1. <code>qr</code> / <code>android</code>: 6,675 всього | 448 невдалих | <strong>6.71%</strong><br />
+2. <code>apple_pay</code> / <code>android</code>: 83,677 всього | 5,130 невдалих | <strong>6.13%</strong><br />
+3. <code>google_pay</code> / <code>web</code>: 59,996 всього | 3,645 невдалих | <strong>6.08%</strong><br />
+4. <code>card</code> / <code>android</code>: 183,332 всього | 11,079 невдалих | <strong>6.04%</strong><br />
+5. <code>apple_pay</code> / <code>ios</code>: 83,164 всього | 5,025 невдалих | <strong>6.04%</strong><br />
+6. <code>card</code> / <code>web</code>: 183,435 всього | 11,020 невдалих | <strong>6.01%</strong><br />
+7. <code>google_pay</code> / <code>ios</code>: 59,761 всього | 3,590 невдалих | <strong>6.01%</strong><br />
+8. <code>qr</code> / <code>web</code>: 6,669 всього | 400 невдалих | <strong>6.00%</strong><br />
+9. <code>google_pay</code> / <code>android</code>: 59,450 всього | 3,563 невдалих | <strong>5.99%</strong><br />
+10. <code>apple_pay</code> / <code>web</code>: 83,505 всього | 4,966 невдалих | <strong>5.95%</strong><br />
+11. <code>card</code> / <code>ios</code>: 183,541 всього | 10,912 невдалих | <strong>5.95%</strong><br />
+12. <code>qr</code> / <code>ios</code>: 6,795 всього | 402 невдалих | <strong>5.92%</strong></p>
+<h4>5) Запит 5: Пікові години (Peak Hours)</h4>
+<pre><code class="language-sql">SELECT 
+    hour(from_iso8601_timestamp(createdDate)) AS hour_of_day,
+    COUNT(*) AS payments_count
+FROM payments
+GROUP BY 1
+ORDER BY 1 ASC;
+</code></pre>
+<p><em>Результати:</em><br />
+* 00:00–04:00 (Ніч): ~6,600 транзакцій на годину (мінімум о 04:00 — 6,585).<br />
+* 05:00–08:00 (Ранок): зростання з 13,291 до 59,947.<br />
+* 12:00 (Обідній пік): 66,304 транзакції.<br />
+* 17:00–19:00 (Головний вечірній пік): 72,905 о 17:00, <strong>80,338 о 18:00 (максимум дня)</strong>, 73,167 о 19:00.</p>
+<h4>6) Запит 6: Запізнілі події (Late Events)</h4>
+<pre><code class="language-sql">SELECT 
+    COUNT(*) AS total_events,
+    COUNT(CASE WHEN date_diff('second', from_iso8601_timestamp(modifiedDate), from_iso8601_timestamp(receivedAt)) &gt; 60 THEN 1 END) AS late_events_gt_60s,
+    ROUND(100.0 * COUNT(CASE WHEN date_diff('second', from_iso8601_timestamp(modifiedDate), from_iso8601_timestamp(receivedAt)) &gt; 60 THEN 1 END) / COUNT(*), 4) AS late_pct
+FROM payment_events;
+</code></pre>
+<ul>
+<li><strong>Результат:</strong> 60,824 події запізнилися понад 60 секунд (<strong>2.01%</strong>).</li>
+</ul>
+<hr />
+<h3>3. CTAS у Parquet та порівняння вартості (JSON vs Parquet)</h3>
+<pre><code class="language-sql">CREATE TABLE payments_curated
+WITH (
+    format = 'PARQUET',
+    parquet_compression = 'SNAPPY',
+    external_location = 's3://ucu-ooad-lab8-mshamrz-438424053032/curated/',
+    partitioned_by = ARRAY['dt']
+) AS
+SELECT * FROM payments;
+</code></pre>
+<h4>Бенчмарк: Data Scanned та Час виконання</h4>
+<table>
+<thead>
+<tr>
+<th>Запит</th>
+<th>Обсяг сканування (JSON)</th>
+<th>Час (JSON)</th>
+<th>Обсяг сканування (Parquet)</th>
+<th>Час (Parquet)</th>
+<th><strong>У скільки разів дешевше</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query 3 (Turnover)</strong></td>
+<td><strong>1,202.29 MB</strong></td>
+<td>3.60 с</td>
+<td><strong>6.10 MB</strong></td>
+<td>1.16 с</td>
+<td><strong>у 197.1 разів дешевше!</strong></td>
+</tr>
+<tr>
+<td><strong>Query 4 (Failure rate)</strong></td>
+<td><strong>1,202.29 MB</strong></td>
+<td>3.59 с</td>
+<td><strong>0.64 MB</strong></td>
+<td>1.00 с</td>
+<td><strong>у 1,878.6 разів дешевше!</strong></td>
+</tr>
+<tr>
+<td><strong>Query 5 (Peak hours)</strong></td>
+<td><strong>1,202.29 MB</strong></td>
+<td>3.40 с</td>
+<td><strong>6.24 MB</strong></td>
+<td>1.22 с</td>
+<td><strong>у 192.7 разів дешевше!</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Чому так відбувається:</strong><br />
+JSON — текстовий рядковий формат: щоб витягнути одне поле, Athena парсить весь 1.2 ГБ файл.<br />
+Parquet — колоночний двійковий формат зі стисненням Snappy і статистикою блоків (min/max). Для Query 4 Athena зчитує лише колонки <code>paymentmethod</code> і <code>device</code> (0.64 MB), що економить 99.95% трафіку і зменшує рахунок у <strong>~1,878 разів</strong>.</p>
+</blockquote>
+<hr />
+<h3>4. Відповіді на питання Part 2</h3>
+<ul>
+<li><strong>Чому <code>DISTINCT</code> передує <code>row_number()</code>?</strong><br />
+  Близько 1% вебхуків надсилаються повторно через ретраї мережі банку (at-least-once delivery) і є повністю ідентичними рядками. <code>SELECT DISTINCT</code> прибирає їх до застосування віконних функцій, зменшуючи кардинальність сортування та гарантуючи детермінованість вибору.</li>
+<li><strong>Що ламається без дедуплікації?</strong><br />
+  Кожен платіж містить 2–3 події життєвого циклу (<code>created</code> → <code>processing</code> → <code>success/failure</code>). Без дедуплікації за <code>invoiceId</code> обсяг транзакцій буде 3 мільйони замість 1 мільйона, фінансовий оборот буде задвоєний/затроєний, а метрика відмов стане хибною.</li>
+<li><strong>Glue Crawler (Way B):</strong></li>
+<li><em>Типи даних:</em> Crawler обрав <code>int</code> для <code>amount</code>, <code>finalamount</code>, <code>ccy</code>, <code>mcc</code> та <code>string</code> для дат (<code>createddate</code>, <code>modifieddate</code>, <code>receivedat</code>).</li>
+<li><em>Партиції:</em> Crawler автоматично розпізнав префікс <code>dt=...</code> як партицію <code>dt</code>.</li>
+<li><em>Поле <code>failurereason</code>:</em> Успішно розпізнано як <code>string</code>, оскільки Crawler семплює достатню вибірку рядків.</li>
+<li><em>Чому ручні схеми досі популярні:</em> Ручні схеми гарантують стабільність і сумісність типів (наприклад, <code>bigint</code> замість <code>int</code> для грошей, явний ISO-парсинг дат), а також контролюються в репозиторії через Git і Terraform/CloudFormation, виключаючи несподіваний дрифт схеми.</li>
+</ul>
+<hr />
+<h2>Part 3 — Потокова обробка: Redpanda + Python (Streaming Locally)</h2>
+<h3>Опис реалізації</h3>
+<ul>
+<li><strong>Продюсер (<code>producer.py</code>):</strong> Відтворює події з файлу <code>events_2026-10-01.jsonl</code> строго у порядку <code>receivedAt</code> (processing time) зі швидкістю 20–100 подій/с. Ключем повідомлення є <code>invoiceId</code>, завдяки чому всі події одного платежу потрапляють у ту саму партицію (збереження причинно-наслідкового порядку).</li>
+<li><strong>Конспоживач (<code>consumer.py</code>):</strong> Виконує дедуплікацію точних повторів, групує події у <strong>1-хвилинні вікна event time (<code>modifiedDate</code>)</strong> та рахує відсоток відмов (<code>failure rate</code>) для кожного методу оплати. Вікна закриваються з очікуванням запізнілих подій (Watermark + 2 хвилини). Якщо частка відмов перевищує 10%, генерується <code>[ALERT]</code>.</li>
+</ul>
+<hr />
+<h3>Результати 4-х експериментів:</h3>
+<h4>Експеримент 1: Зупинка споживача на 1 хвилину та перезапуск</h4>
+<ul>
+<li><strong>Що перевірялось:</strong> Консьюмер зупинили під час надходження потоку, зачекали, а потім запустили знову.</li>
+<li><strong>Результат:</strong> </li>
+<li>Платежів у базовому прогоні: <strong><code>13,795</code></strong></li>
+<li>Платежів після зупинки та перезапуску: <strong><code>13,795</code></strong></li>
+<li><strong>Втрачено подій: <code>0</code></strong></li>
+<li><strong>Чому так:</strong> Kafka/Redpanda зберігає незмінний лог повідомлень (commit log) і відстежує позицію читання через зміщення (<code>offsets</code>) групи споживачів. Під час простою споживача події накопичувались у топіку, а після рестарту споживач прочитав їх із точки зупинки без втрати даних.</li>
+</ul>
+<h4>Експеримент 2: Два споживачі в одній Consumer Group</h4>
+<ul>
+<li><strong>Що перевірялось:</strong> Топік <code>payments</code> має 3 партиції. Запуск споживача <code>Worker-1</code>, після чого до тієї ж групи додається <code>Worker-2</code>.</li>
+<li><strong>Результат:</strong></li>
+<li>Kafka Group Coordinator ініціював ребалансування (Rebalance).</li>
+<li><code>Worker-1</code> отримав партиції <strong><code>[0, 1]</code></strong> (обробив 67,460 подій, <strong>66.7%</strong>).</li>
+<li><code>Worker-2</code> отримав партицію <strong><code>[2]</code></strong> (обробив 33,624 подій, <strong>33.3%</strong>).</li>
+<li>Загальна кількість подій: 101,084 (100% покриття, події не дублювались між воркерами).</li>
+</ul>
+<h4>Експеримент 3: Продюсер штучно генерує 30% помилок платежів</h4>
+<ul>
+<li><strong>Що перевірялось:</strong> Продюсер примусово змінив статус 30% платежів на <code>failure</code>.</li>
+<li><strong>Результат:</strong></li>
+<li>Загальний рівень помилок підскочив із базових <strong>~6.0%</strong> до <strong>33.36%</strong>.</li>
+<li>Консьюмер згенерував <strong>1,257 алертів</strong> у 1-хвилинних вікнах (умова <code>failure_rate &gt; 10%</code> спрацьовувала практично щохвилини для Card, Google Pay та Apple Pay).</li>
+</ul>
+<h4>Експеримент 4: Очікування запізнілих подій встановлено на 0 (Zero Lateness)</h4>
+<ul>
+<li><strong>Що перевірялось:</strong> Час очікування запізнілих подій зменшено з 2 хвилин до 0 хвилин.</li>
+<li><strong>Результат:</strong></li>
+<li>Кількість відхилених подій як запізнілих: зросла до <strong><code>2,532</code> подій (2.50%)</strong> (у базовому режимі було лише 1,680).</li>
+<li>Кількість платежів, врахованих у вікнах: впала на <strong>198 платежів</strong>.</li>
+<li><strong>Що змінилося в цифрах:</strong> Вікна закривалися миттєво після завершення календарної хвилини. Вебхуки, які прийшли із затримкою 1–2 хвилини, були відкинуті консьюмером. Це призвело до заниження загальної кількості платежів у вікнах і спотворення статистики фінальних статусів (частина платежів зафіксувалася у стані <code>processing</code>, бо фінальний статус <code>success</code> прийшов із запізненням).</li>
+</ul>
+<hr />
+<h2>Part 4 — Хмарний потоковий пайплайн (Cloud Streaming)</h2>
+<h3>1. Архітектурна діаграма</h3>
+<div class="diagram-container">
+  <div class="diagram-title">Cloud Streaming Pipeline Architecture (Part 4)</div>
+  <svg viewBox="0 0 820 220" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="gradS3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#047857;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="gradAlert" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="gradSNS" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#b91c1c;stop-opacity:1" />
+      </linearGradient>
+      <linearGradient id="gradAthena" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#6d28d9;stop-opacity:1" />
+      </linearGradient>
+      <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b" />
+      </marker>
+    </defs>
+
+    <!-- Producer Node -->
+    <rect x="20" y="70" width="140" height="70" rx="8" fill="url(#grad1)" />
+    <text x="90" y="100" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Producer</text>
+    <text x="90" y="122" fill="#e0e7ff" font-family="Segoe UI, sans-serif" font-size="11" text-anchor="middle">(Python Micro-batches)</text>
+
+    <!-- Arrow Producer -> Ingestion -->
+    <path d="M 160 105 L 210 105" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none" />
+
+    <!-- Ingestion & Buffer -->
+    <rect x="220" y="70" width="150" height="70" rx="8" fill="url(#grad1)" />
+    <text x="295" y="100" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Stream Buffer</text>
+    <text x="295" y="122" fill="#e0e7ff" font-family="Segoe UI, sans-serif" font-size="11" text-anchor="middle">payments-stream/</text>
+
+    <!-- Arrow Ingestion -> S3 -->
+    <path d="M 370 95 L 430 55" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none" />
+
+    <!-- Arrow Ingestion -> Monitor -->
+    <path d="M 370 120 L 430 155" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none" />
+
+    <!-- S3 Storage -->
+    <rect x="440" y="20" width="160" height="65" rx="8" fill="url(#gradS3)" />
+    <text x="520" y="47" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Amazon S3 Lake</text>
+    <text x="520" y="68" fill="#d1fae5" font-family="Segoe UI, sans-serif" font-size="10.5" text-anchor="middle">JSON Micro-batches</text>
+
+    <!-- Real-time Monitor -->
+    <rect x="440" y="130" width="160" height="65" rx="8" fill="url(#gradAlert)" />
+    <text x="520" y="157" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Real-time Monitor</text>
+    <text x="520" y="178" fill="#fef3c7" font-family="Segoe UI, sans-serif" font-size="10.5" text-anchor="middle">Failure Rate &gt; 10%</text>
+
+    <!-- Arrow S3 -> Athena -->
+    <path d="M 600 52 L 650 52" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none" />
+
+    <!-- Amazon Athena -->
+    <rect x="660" y="20" width="140" height="65" rx="8" fill="url(#gradAthena)" />
+    <text x="730" y="47" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Amazon Athena</text>
+    <text x="730" y="68" fill="#ede9fe" font-family="Segoe UI, sans-serif" font-size="10.5" text-anchor="middle">payments_stream SQL</text>
+
+    <!-- Arrow Monitor -> SNS -->
+    <path d="M 600 162 L 650 162" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none" />
+
+    <!-- Amazon SNS -->
+    <rect x="660" y="130" width="140" height="65" rx="8" fill="url(#gradSNS)" />
+    <text x="730" y="157" fill="#fff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Amazon SNS</text>
+    <text x="730" y="178" fill="#fee2e2" font-family="Segoe UI, sans-serif" font-size="10.5" text-anchor="middle">Email Notifications</text>
+  </svg>
+</div>
+
+<h3>2. Результат виконання запиту над потоком в Athena</h3>
+<p>Запит над живим потоком, що надходив у S3 реальними мікро-батчами:</p>
+<pre><code class="language-sql">SELECT 
+    status,
+    paymentMethod,
+    COUNT(*) AS stream_count,
+    ROUND(SUM(finalAmount) / 100.0, 2) AS stream_turnover_uah
+FROM payments_stream
+GROUP BY status, paymentMethod
+ORDER BY stream_count DESC;
+</code></pre>
+<p><em>Результати з Athena (час виконання: 0.46 сек, обсяг сканування: 1.99 MB):</em><br />
+* <code>card</code> / <code>created</code>: 893<br />
+* <code>card</code> / <code>processing</code>: 892<br />
+* <code>card</code> / <code>success</code>: 834 | Оборот: 686,578.15 ₴<br />
+* <code>card</code> / <code>failure</code>: 156 (включно зі штучним спайком відмов у батчі 3)<br />
+* <code>apple_pay</code> / <code>success</code>: 400 | Оборот: 281,694.00 ₴<br />
+* <code>google_pay</code> / <code>success</code>: 233 | Оборот: 169,073.98 ₴<br />
+* <code>qr</code> / <code>success</code>: 31 | Оборот: 25,933.26 ₴</p>
+<h3>3. Оповіщення Amazon SNS</h3>
+<ul>
+<li>Під час проходження 3-го мікро-батчу рівень відмов склав <strong>36.8%</strong>, що перевищило поріг 10%.</li>
+<li>Система негайно надіслала повідомлення в тему SNS <code>arn:aws:sns:us-east-1:438424053032:payment-failure-alerts</code> на email <code>m.moroz.pn@ucu.edu.ua</code>.</li>
+</ul>
+<h3>4. Порівняння хмарного пайплайну з локальним Redpanda та вартість</h3>
+<ul>
+<li><strong>Відмінності:</strong></li>
+<li><em>Збереження стану (Persistence):</em> У локальному Redpanda повідомлення зберігаються у локальному commit log на диску. У хмарі S3 виступає довготривалим озером даних (Data Lake), доступним для аналітичних SQL-запитів багатьма користувачами одночасно.</li>
+<li><em>Масштабування (Scalability):</em> Хмарний буфер і Lambda масштабуються автоматично під навантаженням без потреби вручну додавати брокери чи переналаштовувати партиції.</li>
+<li><em>Аналітика на льоту (Serverless SQL):</em> Athena дозволяє робити Ad-hoc SQL аналітику над потоком даних у S3 безпосередньо, без потреби писати окремий додаток-споживач.</li>
+<li><strong>Вартість (Cost):</strong></li>
+<li>S3 зберігання 1.2 ГБ: ~$0.03 на місяць.</li>
+<li>Athena запити: $5.00 за 1 TB ($0.00001 за наш запит на 2 MB).</li>
+<li>SNS: перші 1,000 email сповіщень на місяць безкоштовні.</li>
+<li>Загальна вартість тестування в AWS склала <strong>менше $0.05</strong>, тоді як постійні виділені брокери Kafka коштували б від $50–150/місяць.</li>
+</ul>
+</body>
+</html>
