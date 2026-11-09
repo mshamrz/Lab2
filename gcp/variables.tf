@@ -1,7 +1,7 @@
 variable "project_id" {
   description = "The Google Cloud Project ID"
   type        = string
-  default     = "spry-auth"
+  default     = "spry-auth-510917"
 }
 
 variable "region" {

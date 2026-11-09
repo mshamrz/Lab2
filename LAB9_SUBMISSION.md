@@ -1,7 +1,7 @@
 # Лабораторна робота 9: Spry on Google Cloud (and what it would cost)
 
 **Студентка:** Маріана Мороз (`m.moroz.pn@ucu.edu.ua`)  
-**GCP Project ID:** `spry-auth`  
+**GCP Project ID:** `spry-auth-510917`  
 **Регіон GCP:** `us-central1`  
 **Репозиторій проєкту:** [mshamrz/Lab2](https://github.com/mshamrz/Lab2)  
 **Архітектурне рішення:** [docs/adr/0008-gcp-service-choices.md](https://github.com/mshamrz/Lab2/blob/main/docs/adr/0008-gcp-service-choices.md)  
