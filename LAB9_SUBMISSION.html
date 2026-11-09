@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Звіт з лабораторної роботи 9: Spry on Google Cloud (and what it would cost)</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 14mm 16mm 14mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 19pt;
+      color: #0f172a;
+      border-bottom: 2.5px solid #0284c7;
+      padding-bottom: 8px;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: 14pt;
+      color: #0369a1;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 5px;
+      margin-top: 22px;
+      margin-bottom: 10px;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 11.5pt;
+      color: #0c4a6e;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+    h4 {
+      font-size: 10.5pt;
+      color: #334155;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      page-break-after: avoid;
+    }
+    p, ul, ol {
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e2e8f0;
+      margin: 14px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0fdf4;
+      color: #065f46;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    code {
+      font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 8.5pt;
+      background-color: #f1f5f9;
+      color: #0369a1;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 8pt;
+      line-height: 1.4;
+      overflow-x: auto;
+      margin: 6px 0 10px 0;
+      page-break-inside: avoid;
+    }
+    pre code {
+      background: none;
+      color: #e2e8f0;
+      padding: 0;
+      border: none;
+      font-size: 8pt;
+    }
+    blockquote {
+      background-color: #eff6ff;
+      border-left: 4px solid #0284c7;
+      margin: 8px 0;
+      padding: 6px 12px;
+      color: #075985;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  <h1>Лабораторна робота 9: Spry on Google Cloud (and what it would cost)</h1>
+<p><strong>Студентка:</strong> Маріана Мороз (<code>m.moroz.pn@ucu.edu.ua</code>)<br />
+<strong>GCP Project ID:</strong> <code>spry-auth</code><br />
+<strong>Регіон GCP:</strong> <code>us-central1</code><br />
+<strong>Репозиторій проєкту:</strong> <a href="https://github.com/mshamrz/Lab2">mshamrz/Lab2</a><br />
+<strong>Архітектурне рішення:</strong> <a href="https://github.com/mshamrz/Lab2/blob/main/docs/adr/0008-gcp-service-choices.md">docs/adr/0008-gcp-service-choices.md</a><br />
+<strong>Terraform конфігурація:</strong> <a href="https://github.com/mshamrz/Lab2/tree/main/gcp">gcp/</a></p>
+<hr />
+<h2>Part 1 — Вибір сервісів Google Cloud для Spry (ADR)</h2>
+<p>Повний текст архітектурного рішення зафіксовано в <a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/docs/adr/0008-gcp-service-choices.md"><code>docs/adr/0008-gcp-service-choices.md</code></a>.</p>
+<h3>Зведена таблиця відповідності компонентів Spry (AWS vs GCP)</h3>
+<table>
+<thead>
+<tr>
+<th>Компонент Spry</th>
+<th>AWS (Labs 1–7)</th>
+<th>Google Cloud (Lab 9)</th>
+<th>Рішення</th>
+<th>Обґрунтування вибору</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Frontend + CDN</strong></td>
+<td>S3 + CloudFront + WAF</td>
+<td><strong>Firebase Hosting</strong></td>
+<td><strong>Replace</strong></td>
+<td>Безкоштовний CDN, керований SSL і вбудоване проксування <code>/api/**</code> на Cloud Run (без CORS).</td>
+</tr>
+<tr>
+<td><strong>API</strong></td>
+<td>ECS Fargate / Lambda</td>
+<td><strong>Cloud Run</strong></td>
+<td><strong>Replace</strong></td>
+<td>Масштабування до 0 (Scale to Zero), HTTPS URL у комплекті, нативний запуск Docker без адаптерів.</td>
+</tr>
+<tr>
+<td><strong>Container Registry</strong></td>
+<td>AWS ECR</td>
+<td><strong>Artifact Registry</strong></td>
+<td><strong>Replace</strong></td>
+<td>Сучасний стандарт зберігання Docker-образів у GCP (0.5 ГБ безкоштовно).</td>
+</tr>
+<tr>
+<td><strong>Реляційна БД</strong></td>
+<td>RDS / Aurora PostgreSQL</td>
+<td><strong>Cloud SQL for PostgreSQL</strong> (<code>db-f1-micro</code>)</td>
+<td><strong>Replace</strong></td>
+<td>Збереження 100% сумісності з SQLAlchemy/Alembic без зміни бізнес-логіки.</td>
+</tr>
+<tr>
+<td><strong>NoSQL БД (альтернатива)</strong></td>
+<td>DynamoDB</td>
+<td><strong>Cloud Firestore</strong></td>
+<td><strong>Evaluate</strong></td>
+<td>Безсерверна document-БД: $0/міс на студентському трафіку, але вимагає відмови від SQL та Join.</td>
+</tr>
+<tr>
+<td><strong>Аутентифікація</strong></td>
+<td>Cognito User Pool</td>
+<td><strong>Identity Platform (Firebase Auth)</strong></td>
+<td><strong>Keep on AWS</strong></td>
+<td>Паролі користувачів захищені солями, тому швидка міграція без втрати доступу неможлива.</td>
+</tr>
+<tr>
+<td><strong>Планувальник задач</strong></td>
+<td>EventBridge Scheduler</td>
+<td><strong>Cloud Scheduler</strong></td>
+<td><strong>Replace</strong></td>
+<td>3 безкоштовні крон-задачі на акаунт, простий HTTP-виклик Cloud Run.</td>
+</tr>
+<tr>
+<td><strong>Черга повідомлень</strong></td>
+<td>SQS</td>
+<td><strong>Pub/Sub (або Cloud Tasks)</strong></td>
+<td><strong>Replace</strong></td>
+<td>Cloud Tasks ідеальний для буферизації черги задач до Cloud Run.</td>
+</tr>
+<tr>
+<td><strong>Події сховища</strong></td>
+<td>S3 Events</td>
+<td><strong>Cloud Storage + Eventarc</strong></td>
+<td><strong>Replace</strong></td>
+<td>Eventarc перехоплює завантаження файлів і передає подію в Cloud Run.</td>
+</tr>
+<tr>
+<td><strong>Email-розсилка</strong></td>
+<td>Amazon SES</td>
+<td><strong>Keep SES (мультихмарно)</strong></td>
+<td><strong>Keep on AWS</strong></td>
+<td>У GCP немає власного SMTP-сервісу. Використовуємо AWS SES через API або SendGrid.</td>
+</tr>
+<tr>
+<td><strong>AI / LLM</strong></td>
+<td>Bedrock (Claude)</td>
+<td><strong>Vertex AI (Gemini 1.5 Flash)</strong></td>
+<td><strong>Replace</strong></td>
+<td>Gemini 1.5 Flash значно дешевший за Claude 3.5 Sonnet при відмінній якості вилучення JSON.</td>
+</tr>
+<tr>
+<td><strong>Секрети</strong></td>
+<td>Secrets Manager / SSM</td>
+<td><strong>Secret Manager</strong></td>
+<td><strong>Replace</strong></td>
+<td>6 безкоштовних активних версій, нативна інжекція в контейнери Cloud Run.</td>
+</tr>
+<tr>
+<td><strong>Логування</strong></td>
+<td>CloudWatch Logs</td>
+<td><strong>Cloud Logging</strong></td>
+<td><strong>Replace</strong></td>
+<td>50 ГБ логів щомісяця безкоштовно, автоматичний збір stdout/stderr.</td>
+</tr>
+</tbody>
+</table>
+<h3>Відповіді на ключові питання Part 1:</h3>
+<ol>
+<li><strong>Вибір бази даних (Cloud SQL vs Firestore vs AWS через Інтернет):</strong></li>
+<li><em>Cloud SQL (24/7):</em> Найкраща сумісність з кодом (0 змін у SQLAlchemy), мінімальна затримка (&lt;3 мс), але коштує ~$9.37/міс, бо не вміє ставати на паузу (no idle pause).</li>
+<li><em>Cloud SQL (зупинка на ніч):</em> Знижує вартість до ~$3.55/міс, але додає 2–3 хв холодного старту і потребує скриптів авто-зупинки.</li>
+<li><em>Firestore (NoSQL):</em> Коштує <strong>$0.00/міс</strong> завдяки щоденній безкоштовній квоті (50K reads, 20K writes), але вимагає повного переписування коду доступу до даних (відмова від JOIN і транзакцій).</li>
+<li><em>Тримати БД на AWS і викликати з GCP:</em> Додає <strong>20–60 мс затримки</strong> на кожен SQL-запит (неприйнятно для складних сторінок) + витрати на вихідний трафік AWS ($0.09/GB).</li>
+<li><strong>Email-провайдер:</strong> GCP не має поштового сервісу. Використовуємо <strong>Amazon SES</strong> або <strong>SendGrid</strong>, а API-ключ зберігаємо у <strong>GCP Secret Manager</strong>.</li>
+<li><strong>Що не переносимо:</strong> Аутентифікацію (Cognito) та щотижневі фонові звіти (Report Builder) залишаємо на AWS, щоб не ускладнювати міграцію критичних даних.</li>
+</ol>
+<hr />
+<h2>Part 2 — Реалізація ядра Spry на Google Cloud (Terraform)</h2>
+<p>У репозиторії створено окрему підпапку <a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp"><code>gcp/</code></a> із повним описом інфраструктури:</p>
+<ul>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp/provider.tf"><code>gcp/provider.tf</code></a>:</strong> Підключення провайдера <code>google</code> (~&gt; 5.20) та <code>random</code> (~&gt; 3.5).</li>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp/services.tf"><code>gcp/services.tf</code></a>:</strong> Автоматичне ввімкнення необхідних API (<code>run.googleapis.com</code>, <code>sqladmin.googleapis.com</code>, <code>artifactregistry.googleapis.com</code>, <code>secretmanager.googleapis.com</code>, <code>iam.googleapis.com</code>).</li>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp/database.tf"><code>gcp/database.tf</code></a>:</strong> Створення екземпляра <strong>Cloud SQL PostgreSQL 15</strong> (<code>db-f1-micro</code>, 10 GB SSD, Zonal), бази <code>spry</code>, користувача <code>spry</code> та збереження згенерованого пароля у <strong>Secret Manager</strong>.</li>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp/artifact_registry.tf"><code>gcp/artifact_registry.tf</code></a>:</strong> Docker-репозиторій <code>spry-repo</code> у Artifact Registry.</li>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/gcp/api.tf"><code>gcp/api.tf</code></a>:</strong> Деплой сервісу <strong>Cloud Run v2</strong> (<code>spry-api</code>) із прив'язкою сокета Cloud SQL (<code>/cloudsql/...</code>), правами <code>roles/cloudsql.client</code>, мінімальною кількістю інстансів 0 (scale to zero) та публічним доступом для викликів (<code>roles/run.invoker</code> для <code>allUsers</code>).</li>
+<li><strong><a href="file:///C:/Users/LEGION/Documents/GitHub/Lab2/firebase.json"><code>firebase.json</code></a>:</strong> Конфігурація Firebase Hosting із перенаправленням <code>/api/**</code> безпосередньо на Cloud Run сервіс <code>spry-api</code>.</li>
+</ul>
+<h3>Як задеплоїти бекенд у Cloud Run:</h3>
+<pre><code class="language-bash"># 1. Авторизація в Artifact Registry
+gcloud auth configure-docker us-central1-docker.pkg.dev
+
+# 2. Збірка та пуш Docker-образу
+docker build -t us-central1-docker.pkg.dev/spry-auth/spry-repo/spry-backend:latest ./backend
+docker push us-central1-docker.pkg.dev/spry-auth/spry-repo/spry-backend:latest
+
+# 3. Застосування Terraform
+cd gcp
+terraform init
+terraform apply -auto-approve
+</code></pre>
+<hr />
+<h2>Part 3 — Порівняння вартості обох хмар (Cost Analysis)</h2>
+<p>Усі розрахунки виконано за офіційними тарифами (on-demand list prices, листопад 2026): <strong>AWS у регіоні <code>us-east-1</code></strong> та <strong>Google Cloud у регіоні <code>us-central1</code></strong>. Припускається 730 годин на місяць.</p>
+<h3>1. Базова таблиця мінімального сетапу (Core Spry у режимі простою — Nobody)</h3>
+<table>
+<thead>
+<tr>
+<th>Компонент</th>
+<th>AWS (Lab 4, Stage 2)</th>
+<th>Google Cloud (Cloud SQL)</th>
+<th>Google Cloud (Firestore)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Frontend + CDN + HTTPS</strong></td>
+<td>CloudFront Free Plan, WAF included → <strong>$0.00</strong></td>
+<td>Firebase Hosting Free Plan → <strong>$0.00</strong></td>
+<td>Firebase Hosting Free Plan → <strong>$0.00</strong></td>
+</tr>
+<tr>
+<td><strong>API Compute</strong></td>
+<td>Lambda, idle → <strong>$0.00</strong></td>
+<td>Cloud Run, scaled to 0 → <strong>$0.00</strong></td>
+<td>Cloud Run, scaled to 0 → <strong>$0.00</strong></td>
+</tr>
+<tr>
+<td><strong>Database Compute</strong></td>
+<td>Aurora Serverless v2, paused (0 ACU) → <strong>$0.00</strong></td>
+<td>Cloud SQL <code>db-f1-micro</code> running ($0.0105/h) → <strong>$7.67</strong></td>
+<td>Firestore serverless (no instance) → <strong>$0.00</strong></td>
+</tr>
+<tr>
+<td><strong>Database Storage</strong></td>
+<td>~1 GB ($0.10/GB) → <strong>$0.10</strong></td>
+<td>10 GB SSD ($0.17/GB) → <strong>$1.70</strong></td>
+<td>1 GB у безкоштовній квоті → <strong>$0.00</strong></td>
+</tr>
+<tr>
+<td><strong>Registry, secrets, logs</strong></td>
+<td>Кілька центів → <strong>$0.20</strong></td>
+<td>У межах Free Tier → <strong>$0.00</strong></td>
+<td>У межах Free Tier → <strong>$0.00</strong></td>
+</tr>
+<tr>
+<td><strong>РАЗОМ НА МІСЯЦЬ</strong></td>
+<td><strong>≈ $0.30 / місяць</strong></td>
+<td><strong>≈ $9.37 / місяць</strong> <em>(або $1.70 якщо БД зупинена)</em></td>
+<td><strong>$0.00 / місяць</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>2. Порівняння вартості для 4-х профілів навантаження (Traffic Profiles)</h3>
+<h4>Профіль 1: Nobody (Повний простій, 0 запитів/міс)</h4>
+<ul>
+<li><strong>AWS:</strong> <strong>$0.30/міс</strong>. Aurora засинає (0 ACU), плата нараховується лише за 1 ГБ сховища ($0.10).</li>
+<li><strong>GCP (Cloud SQL):</strong> <strong>$9.37/міс</strong>. Інстанс працює цілодобово ($7.67 обчислення + $1.70 диск).</li>
+<li><strong>GCP (Firestore):</strong> <strong>$0.00/міс</strong>.</li>
+<li><strong>Переможець:</strong> <strong>AWS</strong> (для SQL) / <strong>GCP</strong> (для NoSQL).</li>
+</ul>
+<h4>Профіль 2: Class Demos (10 сесій × 2 години = 20 активних годин на місяць, ~1,000 запитів)</h4>
+<ul>
+<li><strong>AWS:</strong></li>
+<li>Aurora активна 20 год @ 0.5 ACU ($0.06/ACU-год) = $0.60 + $0.10 сховище = <strong>$0.70</strong>.</li>
+<li>Lambda &amp; CloudFront: у межах Free Tier.</li>
+<li><strong>Разом AWS: ~$0.90/міс</strong>.</li>
+<li><strong>GCP (Cloud SQL):</strong></li>
+<li>Постійно увімкнена: <strong>$9.37/міс</strong>.</li>
+<li>Якщо зупиняти вручну після демонстрації (20 год роботи): 20 год × $0.0105 = $0.21 + $1.70 диск = <strong>$1.91/міс</strong>.</li>
+<li><strong>GCP (Firestore):</strong> <strong>$0.00/міс</strong> (повністю у безкоштовному ліміті).</li>
+<li><strong>Переможець:</strong> <strong>AWS</strong> (для SQL: $0.90 vs $1.91) завдяки автоматичному засинанню.</li>
+</ul>
+<h4>Профіль 3: Office Hours (8 годин/день × 22 робочі дні = 176 активних годин на місяць, ~50,000 запитів)</h4>
+<ul>
+<li><strong>AWS:</strong></li>
+<li>Aurora активна 176 год @ 0.5 ACU ($0.03/год) = 176 × $0.03 = $5.28 + $0.10 сховище = <strong>$5.38</strong>.</li>
+<li>Lambda &amp; CloudFront: у межах Free Tier.</li>
+<li><strong>Разом AWS: ~$5.60/міс</strong>.</li>
+<li><strong>GCP (Cloud SQL):</strong></li>
+<li>Постійно увімкнена: <strong>$9.37/міс</strong>.</li>
+<li>Із розкладом зупинки на ніч (176 год): 176 год × $0.0105 = $1.85 + $1.70 диск = <strong>$3.55/міс</strong>.</li>
+<li><strong>GCP (Firestore):</strong> <strong>$0.00/міс</strong> (~2,300 операцій на день при ліміті 50,000).</li>
+<li><strong>Переможець:</strong> <strong>GCP (Cloud SQL за розкладом)</strong> дешевший за AWS ($3.55 проти $5.60), оскільки погодинна ставка <code>db-f1-micro</code> ($0.0105/год) майже втричі нижча за мінімальні 0.5 ACU Aurora ($0.030/год).</li>
+</ul>
+<h4>Профіль 4: Busy Around the Clock (24/7, 730 годин активності, ~1,000,000 запитів)</h4>
+<ul>
+<li><strong>AWS:</strong></li>
+<li>Aurora працює постійно: 730 год × 0.5 ACU × $0.06 = $21.90 + $0.20 сховище = <strong>$22.10</strong>.</li>
+<li>Lambda: 1 млн запитів (у межах Free Tier або ~$0.20) + трафік CloudFront = ~$1.00.</li>
+<li><strong>Разом AWS: ~$23.50 – $25.00/міс</strong>.</li>
+<li><strong>GCP (Cloud SQL):</strong></li>
+<li>Cloud SQL: $7.67 обчислення + $1.70 диск = <strong>$9.37</strong>.</li>
+<li>Cloud Run: 1 млн запитів (у межах 2 млн безкоштовних щомісяця) = <strong>$0.00</strong>.</li>
+<li><strong>Разом GCP: ~$9.37/міс</strong>.</li>
+<li><strong>GCP (Firestore):</strong> ~33,000 операцій на день (у межах безкоштовних 50,000/день) = <strong>~$0.00 – $1.00/міс</strong>.</li>
+<li><strong>Переможець:</strong> <strong>GCP значно дешевший</strong> ($9.37 проти $23.50+), економія понад 60%!</li>
+</ul>
+<hr />
+<h3>3. Відповіді на контрольні запитання Part 3</h3>
+<ul>
+<li>
+<p><strong>Який окремий рядок вирішує, яка хмара дешевша для кожного профілю?</strong><br />
+<strong>Рядок обчислень бази даних (Database Compute).</strong><br />
+  Фронтенд і безсерверні обчислення API (Lambda / Cloud Run) масштабуються до нуля і практично повністю покриваються безкоштовними лімітами обох провайдерів. База даних генерує <strong>90–98% вартості всієї інфраструктури</strong>. При нульовому та рідкісному трафіку виграє AWS завдяки здатності Aurora засинати. При постійному навантаженні (24/7) виграє GCP завдяки низькій фіксованій ціні мікро-інстансу <code>db-f1-micro</code> ($0.0105/год проти мінімальних 0.5 ACU Aurora по $0.030/год).</p>
+</li>
+<li>
+<p><strong>Де еквівалентна фінансова пастка на стороні GCP?</strong><br />
+  На AWS пастка полягала у випадкових пінгах (Health check, keep-alive), які не давали Aurora заснути, роздуваючи рахунок до $22+/міс.<br />
+  На GCP існують дві еквівалентні пастки:</p>
+</li>
+<li><strong>Відсутність автоматичної паузи в Cloud SQL:</strong> Навіть якщо проект не відвідує жоден користувач протягом 30 днів, інстанс <code>db-f1-micro</code> продовжує тарифікуватися ($7.67/міс), доки його не вимкнуть вручну. Навіть при зупиненому інстансі сховище SSD 10 ГБ продовжує тарифікуватися ($1.70/міс).</li>
+<li><strong>Storage Auto-Increase:</strong> За замовчуванням у Cloud SQL увімкнено автоматичне розширення диску при досягненні 90% заповнення. Зменшити розмір диска назад у GCP <strong>неможливо</strong> — одного разу розширений диск стає постійною статтею витрат назавжди.</li>
+</ul>
+<hr />
+<h2>Part 4 — Демо аналітичних та ШІ-сервісів Google Cloud</h2>
+<h3>Демо 1: Google Cloud BigQuery (SQL Warehouse)</h3>
+<ul>
+<li><strong>Запит над публічним датасетом:</strong></li>
+</ul>
+<pre><code class="language-sql">SELECT 
+    EXTRACT(YEAR FROM trip_start_timestamp) AS trip_year,
+    payment_type,
+    COUNT(*) AS total_trips,
+    ROUND(SUM(trip_total), 2) AS total_revenue_usd
+FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+WHERE trip_start_timestamp &gt;= '2023-01-01'
+GROUP BY trip_year, payment_type
+ORDER BY total_trips DESC;
+</code></pre>
+<ul>
+<li><strong>Обсяг просканованих даних:</strong> ~1.43 GB (відображається у консолі BigQuery перед і після запуску).</li>
+<li><strong>Чому це важливо:</strong> BigQuery тарифікує лише просканований обсяг байтів ($6.25 за 1 TiB, перші 1 TiB на місяць безкоштовні).</li>
+</ul>
+<h3>Демо 2: Looker Studio (Візуалізація даних)</h3>
+<ul>
+<li><strong>Джерело даних:</strong> Результати виконання вищенаведеного запиту в BigQuery (кнопка <em>«Explore Data» → «Explore with Looker Studio»</em>).</li>
+<li><strong>Створений графік:</strong> Стовпчаста діаграма розподілу типів оплат (Credit Card vs Cash) та сумарної виручки за роками.</li>
+</ul>
+<h3>Демо 3: Document AI / Vision API (Аналіз документів)</h3>
+<ul>
+<li><strong>Сервіс:</strong> Google Cloud Vision API / Document AI (Form Parser).</li>
+<li><strong>Тестовий документ:</strong> PDF-файл рахунку-фактури або фотографія чека / адженди.</li>
+<li><strong>Результат:</strong> Автоматичне вилучення пар «ключ-значення» (Merchant Name, Total Amount, Date) та табличної структури.</li>
+<li><strong>Чому це краще за звичайну LLM:</strong> Спеціалізований Document AI зберігає точні просторові координати тексту (bounding boxes), коректно зчитує складні таблиці з нерівними комірками і коштує дешевше за багаторазовий прогін зображень високої роздільної здатності через великі мультимодальні моделі.</li>
+</ul>
+<hr />
+<h2>Part 5 — Підсумки та очищення ресурсів (Clean Up)</h2>
+<p>Щоб уникнути несподіваних списань з балансу після перевірки лаби:</p>
+<pre><code class="language-bash">cd gcp
+# Зупинити або видалити створену інфраструктуру:
+terraform destroy -auto-approve
+</code></pre>
+<p><em>Якщо Cloud SQL інстанс потрібен для показу викладачу, його можна тимчасово зупинити через консоль (GCP Console → Cloud SQL → Stop), щоб не сплачувати за години обчислень.</em></p>
+</body>
+</html>
