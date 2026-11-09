@@ -50,11 +50,6 @@ resource "google_cloud_run_v2_service" "spry_api" {
       }
 
       env {
-        name  = "PORT"
-        value = "8000"
-      }
-
-      env {
         name  = "DATABASE_URL"
         value = "postgresql+psycopg2://${google_sql_user.spry_user.name}:${random_password.db_password.result}@/spry?host=/cloudsql/${google_sql_database_instance.postgres.connection_name}"
       }
