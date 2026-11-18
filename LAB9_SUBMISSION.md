@@ -3,6 +3,9 @@
 **Студентка:** Маріана Мороз (`m.moroz.pn@ucu.edu.ua`)  
 **GCP Project ID:** `spry-auth-510917`  
 **Регіон GCP:** `us-central1`  
+**Live Cloud Run URL:** `https://spry-api-7ufe6p2nia-uc.a.run.app`  
+**Database API Endpoint (читання з БД):** `https://spry-api-7ufe6p2nia-uc.a.run.app/api/meetings`  
+**API Documentation (Swagger):** `https://spry-api-7ufe6p2nia-uc.a.run.app/docs`  
 **Репозиторій проєкту:** [mshamrz/Lab2](https://github.com/mshamrz/Lab2)  
 **Архітектурне рішення:** [docs/adr/0008-gcp-service-choices.md](https://github.com/mshamrz/Lab2/blob/main/docs/adr/0008-gcp-service-choices.md)  
 **Terraform конфігурація:** [gcp/](https://github.com/mshamrz/Lab2/tree/main/gcp)
