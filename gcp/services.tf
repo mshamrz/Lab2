@@ -4,6 +4,7 @@ locals {
     "sqladmin.googleapis.com",         # Cloud SQL Admin
     "artifactregistry.googleapis.com", # Artifact Registry
     "secretmanager.googleapis.com",    # Secret Manager
+    "cloudbuild.googleapis.com",       # Cloud Build
     "iam.googleapis.com",              # Identity and Access Management
     "cloudresourcemanager.googleapis.com"
   ]
